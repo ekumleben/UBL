@@ -1,0 +1,25 @@
+# Environment
+.env
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.mypy_cache/
+.pytest_cache/
+*.egg-info/
+
+# Editorial content (managed manually, not committed)
+ubl/prompts/sf_political_context.md
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Dry-run output
+output/

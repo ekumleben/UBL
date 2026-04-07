@@ -1,0 +1,44 @@
+[
+  {
+    "source": "mission_local",
+    "title": "Board of Supervisors to vote on fourplex rezoning proposal Thursday",
+    "url": "https://example.com/fourplex-rezoning",
+    "content": "The San Francisco Board of Supervisors will vote Thursday on a proposal to allow fourplexes on lots currently zoned for single-family homes. The measure, sponsored by Supervisor Preston, has drawn support from housing advocates and opposition from some neighborhood groups. A public hearing is scheduled for 2 PM at City Hall.",
+    "published_at": "2026-04-02T10:00:00Z"
+  },
+  {
+    "source": "streetsblog_sf",
+    "title": "SFMTA approves new protected bike lane on Valencia Street",
+    "url": "https://example.com/valencia-bike-lane",
+    "content": "The SFMTA Board of Directors voted 5-2 Tuesday to approve a new protected bike lane on Valencia Street between 15th and Cesar Chavez. The project will remove 40 parking spaces. Construction is expected to begin in June.",
+    "published_at": "2026-04-01T15:30:00Z"
+  },
+  {
+    "source": "sf_standard",
+    "title": "SF homelessness count shows 5% decrease from last year",
+    "url": "https://example.com/homeless-count",
+    "content": "San Francisco's biennial point-in-time homeless count showed a 5% decrease from 2024, with approximately 7,400 unhoused individuals counted. City officials credited expanded shelter capacity, while advocates argued the count methodology undercounts the true population.",
+    "published_at": "2026-03-30T08:00:00Z"
+  },
+  {
+    "source": "48_hills",
+    "title": "Community groups push back on proposed luxury condo development at 469 Stevenson",
+    "url": "https://example.com/469-stevenson",
+    "content": "A coalition of community organizations in SoMa is opposing a proposed 27-story luxury condominium tower at 469 Stevenson Street, arguing it would displace existing low-income residents and small businesses. The Planning Commission is scheduled to consider the project next month.",
+    "published_at": "2026-03-29T12:00:00Z"
+  },
+  {
+    "source": "sfist",
+    "title": "Warriors fall to Lakers in overtime thriller",
+    "url": "https://example.com/warriors-lakers",
+    "content": "The Golden State Warriors lost to the Los Angeles Lakers 121-118 in overtime at Chase Center on Wednesday night. Steph Curry scored 35 points but it wasn't enough as LeBron James hit the game-winner.",
+    "published_at": "2026-04-02T23:00:00Z"
+  },
+  {
+    "source": "growsf",
+    "title": "Why you should attend the school closure hearing next week",
+    "url": "https://example.com/school-closure-hearing",
+    "content": "SFUSD's Board of Education will hold a public hearing next Wednesday on the proposed closure of five elementary schools. This is one of the most consequential decisions the board will make this year, and public testimony can make a difference. Here's what you need to know and how to participate.",
+    "published_at": "2026-04-01T09:00:00Z"
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "id": "test-user-001",
+  "email": "test@example.com",
+  "district": "D5",
+  "voter_registered": true,
+  "preferences": {
+    "housing_density": "agree",
+    "homelessness_treatment": "neutral",
+    "transit_priority": "agree",
+    "government_reform": "agree",
+    "quality_of_life_enforcement": "neutral",
+    "education_reform": "neutral"
+  },
+  "engagement_prefs": {
+    "time_budget": "20_min",
+    "in_person": "maybe",
+    "financial": "no"
+  }
+}

@@ -1,0 +1,32 @@
+name: Weekly Digest
+
+on:
+  schedule:
+    # Sunday 2 PM UTC = Sunday 7 AM PT → digest ready for Monday morning
+    - cron: '0 14 * * 0'
+  workflow_dispatch: # Allow manual trigger for testing
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run weekly pipeline
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          FOUNDER_EMAIL: ${{ secrets.FOUNDER_EMAIL }}
+          FOUNDER_USER_ID: ${{ secrets.FOUNDER_USER_ID }}
+          DRY_RUN: 'false'
+        run: python -m ubl.jobs.cron --send
