@@ -111,7 +111,7 @@ def run_digest_pipeline(
 
     # 6. Draft actions for recommendations that need them
     for rec in leverage.recommendations:
-        if rec.contact_info and not rec.draft_text:
+        if not rec.draft_text and (rec.contact_info or rec.channel):
             logger.info("Drafting action: %s", rec.action[:60])
             rec.draft_text = draft_action(rec, user, political_context)
 

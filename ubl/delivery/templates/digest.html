@@ -4,88 +4,89 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Your UBL Weekly</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5; color: #1a1a1a; line-height: 1.6;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5;">
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #0a0a18; color: #e0dcd0; line-height: 1.6;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a18;">
     <tr>
       <td align="center" style="padding: 24px 16px;">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; max-width: 600px; width: 100%;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background-color: #141420; border: 1px solid rgba(139,105,20,0.3); border-radius: 8px; overflow: hidden; max-width: 600px; width: 100%;">
 
           <!-- Header -->
           <tr>
-            <td style="background-color: #1a1a1a; padding: 24px 32px;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 20px; font-weight: 600;">Universal Basic Lobbyist</h1>
-              <p style="margin: 4px 0 0; color: #a0a0a0; font-size: 14px;">Your Weekly — {{ week_of }}</p>
+            <td style="background: linear-gradient(135deg, #1a1a2e 0%, #2a1a30 100%); padding: 28px 32px; border-bottom: 2px solid #8b6914;">
+              <h1 style="margin: 0; color: #f0c020; font-family: 'Press Start 2P', monospace; font-size: 11px; letter-spacing: 2px;">UNIVERSAL BASIC LOBBYIST</h1>
+              <p style="margin: 8px 0 0; color: #908c80; font-size: 13px;">Your Weekly — {{ week_of }}</p>
             </td>
           </tr>
 
           <!-- Reasoning Summary -->
           {% if reasoning_summary %}
           <tr>
-            <td style="padding: 24px 32px 8px;">
-              <p style="margin: 0; font-size: 14px; color: #444; font-style: italic;">{{ reasoning_summary }}</p>
+            <td style="padding: 20px 32px 8px;">
+              <p style="margin: 0; font-size: 14px; color: #a8a498; font-style: italic; line-height: 1.7;">{{ reasoning_summary }}</p>
             </td>
           </tr>
           {% endif %}
 
-          <!-- Open Windows (Recommendations) — FIRST, not last -->
+          <!-- Open Windows (Recommendations) -->
           {% if recommendations %}
           <tr>
-            <td style="padding: 24px 32px 8px;">
-              <h2 style="margin: 0 0 4px; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; color: #1a1a1a;">Open Windows</h2>
-              <p style="margin: 0 0 16px; font-size: 13px; color: #888;">Where your input can still change an outcome</p>
+            <td style="padding: 20px 32px 8px;">
+              <h2 style="margin: 0 0 4px; font-family: 'Press Start 2P', monospace; font-size: 9px; color: #f0c020; letter-spacing: 1px;">OPEN WINDOWS</h2>
+              <p style="margin: 0 0 16px; font-size: 12px; color: #706c60;">Where your input can still change an outcome</p>
             </td>
           </tr>
           {% for rec in recommendations %}
           <tr>
-            <td style="padding: 0 32px 20px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f7ff; border-radius: 6px; border-left: 4px solid #2563eb;">
+            <td style="padding: 0 32px 16px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: rgba(74,124,89,0.1); border-left: 3px solid #4a7c59; border-radius: 0 6px 6px 0;">
                 <tr>
-                  <td style="padding: 16px 16px 12px;">
-                    <!-- Action headline -->
-                    <p style="margin: 0 0 8px; font-size: 15px; font-weight: 600; color: #1a1a1a;">{{ rec.action }}</p>
+                  <td style="padding: 16px;">
+                    <p style="margin: 0 0 8px; font-size: 15px; font-weight: 700; color: #e0dcd0;">{{ rec.action }}</p>
 
-                    <!-- Metadata row -->
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
+                    <!-- Metadata -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
                       <tr>
                         {% if rec.deadline %}
-                        <td style="font-size: 12px; padding: 3px 8px; background-color: #fef2f2; color: #b91c1c; border-radius: 3px; display: inline-block; font-weight: 600;">
-                          ⏰ {{ rec.deadline }}
+                        <td style="font-size: 10px; padding: 3px 8px; background-color: rgba(192,64,64,0.2); color: #e08080; border-radius: 3px; font-weight: 600; font-family: 'Press Start 2P', monospace; letter-spacing: 0.5px;">
+                          {{ rec.deadline }}
                         </td>
+                        <td style="width: 6px;"></td>
                         {% endif %}
-                        <td style="font-size: 12px; padding: 3px 8px; background-color: #f0fdf4; color: #166534; border-radius: 3px; display: inline-block;">
+                        <td style="font-size: 10px; padding: 3px 8px; background-color: rgba(74,124,89,0.2); color: #80c090; border-radius: 3px; font-family: 'Press Start 2P', monospace;">
                           {{ rec.effort_estimate }}
                         </td>
                         {% if rec.legal_weight and rec.legal_weight != 'none' %}
-                        <td style="font-size: 12px; padding: 3px 8px; background-color: #fffbeb; color: #92400e; border-radius: 3px; display: inline-block;">
-                          {% if rec.legal_weight == 'legally_binding' %}⚖️ Legally binding
-                          {% elif rec.legal_weight == 'preserves_standing' %}⚖️ Preserves legal standing
-                          {% elif rec.legal_weight == 'procedural_record' %}📋 Official record
+                        <td style="width: 6px;"></td>
+                        <td style="font-size: 10px; padding: 3px 8px; background-color: rgba(208,176,64,0.2); color: #d0c060; border-radius: 3px; font-family: 'Press Start 2P', monospace;">
+                          {% if rec.legal_weight == 'legally_binding' %}LEGALLY BINDING
+                          {% elif rec.legal_weight == 'preserves_standing' %}PRESERVES STANDING
+                          {% elif rec.legal_weight == 'procedural_record' %}OFFICIAL RECORD
                           {% endif %}
                         </td>
                         {% endif %}
                       </tr>
                     </table>
 
-                    <!-- Rationale -->
-                    <p style="margin: 0 0 10px; font-size: 14px; color: #444;">{{ rec.rationale }}</p>
+                    <p style="margin: 0 0 10px; font-size: 14px; color: #a8a498; line-height: 1.6;">{{ rec.rationale }}</p>
 
                     <!-- Scope advice -->
                     {% if rec.scope_advice %}
-                    <p style="margin: 0 0 10px; font-size: 13px; color: #6b21a8; background-color: #faf5ff; padding: 6px 10px; border-radius: 4px;">
+                    <p style="margin: 0 0 10px; font-size: 12px; color: #a080d0; background: rgba(160,128,208,0.1); padding: 6px 10px; border-radius: 4px;">
                       <strong>Strategy:</strong> {{ rec.scope_advice }}
                     </p>
                     {% endif %}
 
                     <!-- Channel info -->
                     {% if rec.channel %}
-                    <p style="margin: 0 0 4px; font-size: 13px; color: #666;">
-                      <strong>Send to:</strong> {{ rec.channel }}
+                    <p style="margin: 0 0 4px; font-size: 12px; color: #808078;">
+                      <strong style="color: #a8a498;">Send to:</strong> {{ rec.channel }}
                     </p>
                     {% endif %}
                     {% if rec.recipient %}
-                    <p style="margin: 0 0 4px; font-size: 13px; color: #666;">
-                      <strong>Read by:</strong> {{ rec.recipient }}
+                    <p style="margin: 0 0 4px; font-size: 12px; color: #808078;">
+                      <strong style="color: #a8a498;">Read by:</strong> {{ rec.recipient }}
                     </p>
                     {% endif %}
 
@@ -93,43 +94,40 @@
                     {% if rec.action_type == 'vote' %}
                     <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top: 12px;">
                       <tr>
-                        <td style="background-color: #2563eb; border-radius: 4px;">
-                          <a href="https://sfelections.sfgov.org/find-your-poll" style="display: inline-block; padding: 10px 20px; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600;">Find your polling place →</a>
+                        <td style="background-color: #4a7c59; border-radius: 4px;">
+                          <a href="https://sfelections.sfgov.org/find-your-poll" style="display: inline-block; padding: 10px 20px; color: #e8dcc4; text-decoration: none; font-family: 'Press Start 2P', monospace; font-size: 9px; letter-spacing: 0.5px;">FIND YOUR POLLING PLACE</a>
                         </td>
                       </tr>
                     </table>
                     {% elif rec.draft_text %}
-                    <!-- Primary: Do the thing -->
                     {% set mailto_url = rec | mailto %}
                     {% if mailto_url %}
                     <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top: 12px;">
                       <tr>
-                        <td style="background-color: #2563eb; border-radius: 4px;">
-                          <a href="{{ mailto_url }}" style="display: inline-block; padding: 10px 20px; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600;">
-                            {% if rec.action_type == 'public_comment' or rec.action_type == 'ceqa_comment' %}Submit comment →
-                            {% elif rec.action_type == 'email' %}Send this email →
-                            {% else %}Send this →
+                        <td style="background-color: #4a7c59; border-radius: 4px;">
+                          <a href="{{ mailto_url }}" style="display: inline-block; padding: 10px 20px; color: #e8dcc4; text-decoration: none; font-family: 'Press Start 2P', monospace; font-size: 9px; letter-spacing: 0.5px;">
+                            {% if rec.action_type == 'public_comment' or rec.action_type == 'ceqa_comment' %}SUBMIT COMMENT
+                            {% elif rec.action_type == 'email' %}SEND THIS EMAIL
+                            {% else %}TAKE ACTION
                             {% endif %}
                           </a>
                         </td>
                         <td style="padding-left: 8px;">
-                          <span style="font-size: 12px; color: #888;">Opens in your email app — review before sending</span>
+                          <span style="font-size: 11px; color: #706c60;">Opens in your email app</span>
                         </td>
                       </tr>
                     </table>
                     {% endif %}
-                    <!-- Secondary: View/edit the draft -->
-                    <details style="margin-top: 8px; border: 1px solid #e5e7eb; border-radius: 4px; overflow: hidden;">
-                      <summary style="padding: 8px 16px; font-size: 13px; color: #6b7280; cursor: pointer; background-color: #f8fafc;">
+                    <details style="margin-top: 8px; border: 1px solid rgba(139,105,20,0.2); border-radius: 4px; overflow: hidden;">
+                      <summary style="padding: 8px 12px; font-size: 12px; color: #80b8d0; cursor: pointer; background: rgba(0,0,0,0.2);">
                         View & edit draft text
                       </summary>
-                      <div style="padding: 12px 16px; background-color: #ffffff; font-size: 13px; white-space: pre-wrap; border-top: 1px solid #e5e7eb;">{{ rec.draft_text }}</div>
+                      <div style="padding: 12px 16px; background-color: rgba(0,0,0,0.15); font-size: 13px; color: #c8c4b8; white-space: pre-wrap; border-top: 1px solid rgba(139,105,20,0.15);">{{ rec.draft_text }}</div>
                     </details>
                     {% endif %}
 
-                    <!-- Alternatives -->
                     {% if rec.alternatives %}
-                    <p style="margin: 12px 0 0; font-size: 12px; color: #888;">
+                    <p style="margin: 10px 0 0; font-size: 11px; color: #706c60;">
                       <strong>Other options:</strong> {{ rec.alternatives | join(' · ') }}
                     </p>
                     {% endif %}
@@ -141,48 +139,48 @@
           {% endfor %}
           {% elif is_quiet_week %}
           <tr>
-            <td style="padding: 24px 32px;">
-              <h2 style="margin: 0 0 8px; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; color: #1a1a1a;">This Week</h2>
-              <p style="margin: 0; font-size: 14px; color: #666; font-style: italic;">{{ reasoning_summary }}</p>
+            <td style="padding: 20px 32px;">
+              <h2 style="margin: 0 0 8px; font-family: 'Press Start 2P', monospace; font-size: 9px; color: #f0c020; letter-spacing: 1px;">THIS WEEK</h2>
+              <p style="margin: 0; font-size: 14px; color: #a8a498; font-style: italic;">{{ reasoning_summary }}</p>
             </td>
           </tr>
           {% endif %}
 
-          <!-- Context (Digest Items) — supporting evidence, not the main event -->
+          <!-- What's Moving -->
           {% if items %}
           <tr>
             <td style="padding: 8px 32px;">
-              <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 0;">
+              <hr style="border: none; border-top: 1px solid rgba(139,105,20,0.2); margin: 0;">
             </td>
           </tr>
           <tr>
             <td style="padding: 16px 32px 8px;">
-              <h2 style="margin: 0 0 4px; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; color: #666;">What's Moving</h2>
-              <p style="margin: 0 0 16px; font-size: 13px; color: #888;">Context behind this week's open windows</p>
+              <h2 style="margin: 0 0 4px; font-family: 'Press Start 2P', monospace; font-size: 9px; color: #908c80; letter-spacing: 1px;">WHAT'S MOVING</h2>
+              <p style="margin: 0 0 12px; font-size: 12px; color: #706c60;">Context behind this week's open windows</p>
             </td>
           </tr>
           {% for item in items %}
           <tr>
-            <td style="padding: 0 32px 20px;">
+            <td style="padding: 0 32px 16px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="border-left: 3px solid {% if item.has_action_window %}#2563eb{% else %}#d1d5db{% endif %}; padding-left: 16px;">
-                    <h3 style="margin: 0 0 4px; font-size: 15px;">
-                      <a href="{{ item.source_url }}" style="color: #1a1a1a; text-decoration: none;">{{ item.headline }}</a>
+                  <td style="border-left: 3px solid {% if item.has_action_window %}#4a7c59{% else %}#3a3a4a{% endif %}; padding-left: 14px;">
+                    <h3 style="margin: 0 0 4px; font-size: 15px; font-weight: 600;">
+                      <a href="{{ item.source_url }}" style="color: #e0dcd0; text-decoration: none;">{{ item.headline }}</a>
                     </h3>
                     {% if item.decision_stage and item.decision_stage != 'none' %}
-                    <span style="display: inline-block; font-size: 11px; padding: 2px 6px; background-color: #f3f4f6; color: #6b7280; border-radius: 3px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
-                      {% if item.decision_stage == 'committee' %}📋 In Committee
-                      {% elif item.decision_stage == 'full_board' %}🏛 Full Board
-                      {% elif item.decision_stage == 'commission' %}📊 Commission
-                      {% elif item.decision_stage == 'agency' %}🏢 Agency Decision
-                      {% elif item.decision_stage == 'ballot' %}🗳 On the Ballot
-                      {% elif item.decision_stage == 'implementation' %}⚙️ Implementation
+                    <span style="display: inline-block; font-family: 'Press Start 2P', monospace; font-size: 7px; padding: 2px 6px; background-color: rgba(139,105,20,0.15); color: #d0b040; border-radius: 2px; margin-bottom: 6px; letter-spacing: 0.5px;">
+                      {% if item.decision_stage == 'committee' %}IN COMMITTEE
+                      {% elif item.decision_stage == 'full_board' %}FULL BOARD
+                      {% elif item.decision_stage == 'commission' %}COMMISSION
+                      {% elif item.decision_stage == 'agency' %}AGENCY
+                      {% elif item.decision_stage == 'ballot' %}ON THE BALLOT
+                      {% elif item.decision_stage == 'implementation' %}IMPLEMENTATION
                       {% endif %}
                     </span>
                     {% endif %}
-                    <p style="margin: 0 0 6px; font-size: 14px; color: #444;">{{ item.summary }}</p>
-                    <p style="margin: 0; font-size: 13px; color: #2563eb; font-style: italic;">{{ item.why_it_matters }}</p>
+                    <p style="margin: 0 0 6px; font-size: 14px; color: #a8a498; line-height: 1.6;">{{ item.summary }}</p>
+                    <p style="margin: 0; font-size: 13px; color: #80b8d0; font-style: italic;">{{ item.why_it_matters }}</p>
                   </td>
                 </tr>
               </table>
@@ -195,16 +193,16 @@
           {% if further_reading %}
           <tr>
             <td style="padding: 8px 32px;">
-              <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 0;">
+              <hr style="border: none; border-top: 1px solid rgba(139,105,20,0.2); margin: 0;">
             </td>
           </tr>
           <tr>
             <td style="padding: 16px 32px 24px;">
-              <h2 style="margin: 0 0 12px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #888;">Further Reading</h2>
+              <h2 style="margin: 0 0 10px; font-family: 'Press Start 2P', monospace; font-size: 8px; color: #706c60; letter-spacing: 1px;">FURTHER READING</h2>
               {% for link in further_reading %}
               <p style="margin: 0 0 8px; font-size: 14px;">
-                <a href="{{ link.url }}" style="color: #2563eb; text-decoration: none;">{{ link.title }}</a>
-                {% if link.reason %}<br><span style="color: #888; font-size: 13px;">{{ link.reason }}</span>{% endif %}
+                <a href="{{ link.url }}" style="color: #80b8d0; text-decoration: none;">{{ link.title }}</a>
+                {% if link.reason %}<br><span style="color: #706c60; font-size: 12px;">{{ link.reason }}</span>{% endif %}
               </p>
               {% endfor %}
             </td>
@@ -213,15 +211,15 @@
 
           <!-- Footer -->
           <tr>
-            <td style="background-color: #f9f9f9; padding: 24px 32px; border-top: 1px solid #e5e5e5;">
-              <p style="margin: 0 0 8px; font-size: 13px; color: #888; text-align: center;">
-                <a href="{{ site_url }}/console.html" style="color: #2563eb;">Open your console</a> — see history, track actions, update preferences
+            <td style="background-color: rgba(0,0,0,0.3); padding: 24px 32px; border-top: 1px solid rgba(139,105,20,0.2);">
+              <p style="margin: 0 0 8px; font-size: 12px; color: #706c60; text-align: center;">
+                <a href="{{ site_url }}/console.html" style="color: #80b8d0; text-decoration: none;">Open your console</a> — see history, track actions, update preferences
               </p>
-              <p style="margin: 0; font-size: 12px; color: #aaa; text-align: center;">
-                <a href="{{ site_url }}/console.html" style="color: #aaa;">Manage preferences</a> · <a href="{{ site_url }}/unsubscribe.html?uid={{ user_id }}" style="color: #aaa;">Unsubscribe</a> · <a href="{{ site_url }}/privacy.html" style="color: #aaa;">Privacy</a>
+              <p style="margin: 0; font-size: 11px; color: #504c40; text-align: center;">
+                <a href="{{ site_url }}/console.html" style="color: #504c40;">Manage preferences</a> · <a href="{{ site_url }}/unsubscribe.html?uid={{ user_id }}" style="color: #504c40;">Unsubscribe</a> · <a href="{{ site_url }}/privacy.html" style="color: #504c40;">Privacy</a>
               </p>
-              <p style="margin: 8px 0 0; font-size: 11px; color: #ccc; text-align: center;">
-                Universal Basic Lobbyist · universalbasiclobbyist.ai
+              <p style="margin: 8px 0 0; font-family: 'Press Start 2P', monospace; font-size: 7px; color: #3a3830; text-align: center; letter-spacing: 1px;">
+                UNIVERSAL BASIC LOBBYIST · universalbasiclobbyist.ai
               </p>
             </td>
           </tr>
