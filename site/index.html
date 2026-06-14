@@ -340,8 +340,34 @@
 
 
       <div class="waitlist" id="waitlistForm">
-        <a href="signup.html" style="font-family: 'Press Start 2P', monospace; font-size: 0.45rem; padding: 10px 24px; background: #4a7c59; color: #e8dcc4; border: 2px solid #3a5c40; cursor: pointer; text-decoration: none; display: inline-block; letter-spacing: 0.5px; transition: background 0.2s;">SIGN UP FREE</a>
+        <input type="email" id="emailInput" placeholder="your@email.com" aria-label="Email address" />
+        <a href="signup.html" class="signup-btn" onclick="
+          var e=document.getElementById('emailInput').value;
+          if(e&&e.includes('@')){this.href='signup.html?email='+encodeURIComponent(e);}
+        ">SIGN UP FREE</a>
       </div>
+      <style>
+        .signup-btn {
+          font-family: 'Press Start 2P', monospace;
+          font-size: 0.45rem;
+          padding: 10px 16px;
+          background: #4a7c59;
+          color: #e8dcc4;
+          border: 2px solid #3a5c40;
+          border-left: none;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: background 0.2s;
+          text-decoration: none;
+          display: flex;
+          align-items: center;
+          letter-spacing: 0.5px;
+        }
+        .signup-btn:hover { background: #5a9c6a; }
+        @media (max-width: 600px) {
+          .signup-btn { border-left: 2px solid #3a5c40; border-top: none; justify-content: center; padding: 12px 16px; }
+        }
+      </style>
 
       <p class="waitlist-note">Personalized AI that monitors your local government, and helps you take high-leverage actions on your priorities. Because every resident deserves a seat at the table. Even the busy ones.<br><br>Live in SF. <span class="contact-email">Say hi: <a href="mailto:hello@universalbasiclobbyist.ai" style="color:inherit;text-decoration:inherit;">hello@universalbasiclobbyist.ai</a></span></p>
       </div>

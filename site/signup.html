@@ -442,6 +442,13 @@
       document.getElementById('error-msg').style.display = 'block';
     }
 
+    // Pre-fill email from landing page
+    (function() {
+      const p = new URLSearchParams(window.location.search);
+      const e = p.get('email');
+      if (e) document.getElementById('email').value = e;
+    })();
+
     async function doSignup() {
       if (!sb) {
         document.getElementById('error-msg').textContent = 'Still loading — please wait a moment and try again.';
