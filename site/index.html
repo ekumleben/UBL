@@ -339,12 +339,31 @@
       <h1>UNIVERSAL BASIC LOBBYIST</h1>
 
 
-      <div class="waitlist" id="waitlistForm">
-        <input type="email" id="emailInput" placeholder="your@email.com" aria-label="Email address" />
-        <a href="signup.html" class="signup-btn" onclick="
-          var e=document.getElementById('emailInput').value;
-          if(e&&e.includes('@')){this.href='signup.html?email='+encodeURIComponent(e);}
-        ">SIGN UP FREE</a>
+      <div id="signupForm">
+        <div class="waitlist">
+          <input type="email" id="emailInput" placeholder="your@email.com" aria-label="Email address" />
+          <button class="signup-btn" onclick="doSignup()">SIGN UP FREE</button>
+        </div>
+        <select id="districtInput" style="width:100%;padding:8px 10px;font-family:'Press Start 2P',monospace;font-size:0.4rem;background:rgba(255,255,255,0.6);border:2px solid #8b6914;color:#2a2218;margin-top:6px;outline:none;">
+          <option value="">YOUR DISTRICT (OPTIONAL)</option>
+          <option value="D1">D1 — Richmond</option>
+          <option value="D2">D2 — Marina / Pac Heights</option>
+          <option value="D3">D3 — North Beach / Chinatown</option>
+          <option value="D4">D4 — Outer Sunset</option>
+          <option value="D5">D5 — Haight / Western Addition</option>
+          <option value="D6">D6 — SoMa / Tenderloin</option>
+          <option value="D7">D7 — Inner Sunset / West Portal</option>
+          <option value="D8">D8 — Castro / Noe Valley</option>
+          <option value="D9">D9 — Mission</option>
+          <option value="D10">D10 — Bayview / Potrero Hill</option>
+          <option value="D11">D11 — Excelsior / Oceanview</option>
+        </select>
+        <p id="signupError" style="display:none;font-family:'Press Start 2P',monospace;font-size:0.4rem;color:#d04040;margin-top:8px;"></p>
+      </div>
+      <div id="signupSuccess" style="display:none;">
+        <p class="waitlist-note" style="margin-bottom:12px;">YOU'RE IN. Your first briefing is on its way.</p>
+        <a id="surveyLink" href="survey.html" style="font-family:'Press Start 2P',monospace;font-size:0.4rem;padding:8px 16px;background:#4a7c59;color:#e8dcc4;border:2px solid #3a5c40;text-decoration:none;display:inline-block;letter-spacing:0.5px;">PERSONALIZE MY BRIEFING</a>
+        <p style="margin-top:8px;"><a href="#" onclick="document.getElementById('signupSuccess').innerHTML='<p class=waitlist-note>ALL SET. We\\'ll be in touch.</p>';return false;" style="font-family:'Press Start 2P',monospace;font-size:0.35rem;color:#7a6a4a;text-decoration:none;">Skip for now</a></p>
       </div>
       <style>
         .signup-btn {
@@ -358,14 +377,12 @@
           cursor: pointer;
           white-space: nowrap;
           transition: background 0.2s;
-          text-decoration: none;
-          display: flex;
-          align-items: center;
           letter-spacing: 0.5px;
         }
         .signup-btn:hover { background: #5a9c6a; }
         @media (max-width: 600px) {
-          .signup-btn { border-left: 2px solid #3a5c40; border-top: none; justify-content: center; padding: 12px 16px; }
+          .signup-btn { border-left: 2px solid #3a5c40; border-top: none; width: 100%; padding: 12px 16px; }
+          #districtInput { font-size: 0.35rem; }
         }
       </style>
 
@@ -375,37 +392,64 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-// ─── WAITLIST ───
-async function joinWaitlist() {
-  const email = document.getElementById('emailInput').value;
-  if (!email || !email.includes('@')) return;
-  
-  const btn = document.querySelector('.waitlist button');
-  btn.textContent = '...';
+// ─── SIGNUP ───
+const sb = window.supabase.createClient(
+  'https://fueuwdhhuvnrxiwzrqee.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1ZXV3ZGhodXZucnhpd3pycWVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNDAzMzYsImV4cCI6MjA5MTYxNjMzNn0.wmlFet8PpNgXGBPnrXHOXtzFs1HxLkcQIAHBRDitDpo'
+);
+
+async function doSignup() {
+  const email = document.getElementById('emailInput').value.trim();
+  const district = document.getElementById('districtInput').value;
+  const errEl = document.getElementById('signupError');
+  const btn = document.querySelector('.signup-btn');
+
+  errEl.style.display = 'none';
+
+  if (!email || !email.includes('@')) {
+    errEl.textContent = 'ENTER A VALID EMAIL';
+    errEl.style.display = 'block';
+    return;
+  }
+
   btn.disabled = true;
+  btn.textContent = '...';
 
   try {
-    const res = await fetch('/api/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
+    const { data, error } = await sb
+      .from('users')
+      .upsert({
+        email: email,
+        district: district || null,
+        voter_registered: true,
+        preferences: {},
+        engagement_prefs: { time_budget: '30_min', real_name: 'officials_only', in_person: 'maybe', speak: 'written_only', financial: 'no' },
+      }, { onConflict: 'email' })
+      .select();
 
-    if (res.ok) {
-      document.getElementById('waitlistForm').style.display = 'none';
-      document.getElementById('waitlistSuccess').style.display = 'block';
-    } else {
-      btn.textContent = 'RETRY';
-      btn.disabled = false;
-    }
+    if (error) throw error;
+
+    // Also add to MailerLite waitlist
+    try { fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) }); } catch(e) {}
+
+    const userId = data && data[0] ? data[0].id : '';
+    const surveyLink = document.getElementById('surveyLink');
+    if (userId && surveyLink) surveyLink.href = 'survey.html?uid=' + userId;
+
+    document.getElementById('signupForm').style.display = 'none';
+    document.getElementById('signupSuccess').style.display = 'block';
   } catch (err) {
-    btn.textContent = 'RETRY';
+    errEl.textContent = 'SOMETHING WENT WRONG — TRY AGAIN';
+    errEl.style.display = 'block';
     btn.disabled = false;
+    btn.textContent = 'SIGN UP FREE';
   }
 }
+
 document.getElementById('emailInput').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') joinWaitlist();
+  if (e.key === 'Enter') doSignup();
 });
 
 // ─── SPEECH BUBBLES ───
