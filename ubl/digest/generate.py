@@ -43,6 +43,13 @@ def _filter_relevant_articles(
     user_topics = set()
     prefs = user.preferences
     topic_map = {
+        "density_my_block": "housing",
+        "new_condos_help": "housing",
+        "state_override_housing": "housing",
+        "encampment_sweeps": "homelessness",
+        "police_vs_social": "public_safety",
+        "worker_paycuts": "government_reform",
+        # Legacy keys (existing users)
         "housing_density": "housing",
         "transit_priority": "transit",
         "quality_of_life_enforcement": "public_safety",
@@ -112,10 +119,23 @@ def generate_digest(
         for a in relevant
     ]
 
+    freetext = user.preferences.get("freetext", {})
+    freetext_block = ""
+    if freetext:
+        parts = []
+        if freetext.get("priorities"):
+            parts.append(f"What matters to them: {freetext['priorities']}")
+        if freetext.get("tracking"):
+            parts.append(f"Tracking: {freetext['tracking']}")
+        if freetext.get("context"):
+            parts.append(f"About them: {freetext['context']}")
+        freetext_block = "\n".join(parts) + "\n"
+
     user_message = (
         f"## User Profile\n"
         f"District: {user.district or 'Unknown'}\n"
         f"Voter registered: {user.voter_registered}\n"
+        f"{freetext_block}"
         f"Preferences: {json.dumps(user.preferences)}\n"
         f"Engagement: {json.dumps(user.engagement_prefs)}\n\n"
         f"## Political Context\n{political_context}\n\n"
@@ -146,6 +166,8 @@ def generate_digest(
                 summary=item.get("summary", ""),
                 why_it_matters=item.get("why_it_matters", ""),
                 source_url=item.get("source_url", ""),
+                decision_stage=item.get("decision_stage", "none"),
+                has_action_window=item.get("has_action_window", False),
             )
             for item in result.get("items", [])
         ]

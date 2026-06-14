@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UBL — Console</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1a1a2e;
+      font-family: 'DM Sans', sans-serif;
+      color: #e0dcd0;
+      min-height: 100vh;
+    }
+
+    canvas#scene {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      z-index: 0;
+    }
+
+    .canvas-fade {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: linear-gradient(
+        to bottom,
+        rgba(26, 26, 46, 0.3) 0%,
+        rgba(26, 26, 46, 0.45) 40%,
+        rgba(26, 26, 46, 0.55) 100%
+      );
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .app {
+      position: relative;
+      z-index: 10;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0 12px;
+      border-bottom: 1px solid rgba(224,220,208,0.15);
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.55rem;
+      color: #f0e8d0;
+      letter-spacing: 1px;
+    }
+
+    .header .user-info {
+      font-size: 12px;
+      color: #908c80;
+    }
+
+    .header .district-badge {
+      display: inline-block;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.4rem;
+      background: #4a7c59;
+      color: #e8dcc4;
+      padding: 3px 8px;
+      border-radius: 2px;
+      margin-left: 8px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #8b6914;
+    }
+
+    .tab {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.4rem;
+      padding: 10px 14px;
+      background: none;
+      border: none;
+      color: #908c80;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+    }
+
+    .tab:hover { color: #e0dcd0; }
+
+    .tab.active {
+      color: #f0e8d0;
+      border-bottom-color: #f0c020;
+    }
+
+    /* Panels */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* Cards */
+    .card {
+      background: rgba(232, 220, 196, 0.08);
+      border: 1px solid rgba(139, 105, 20, 0.3);
+      border-radius: 6px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .card h3 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.45rem;
+      color: #f0c020;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .card p, .card li {
+      font-size: 14px;
+      color: #c8c4b8;
+      line-height: 1.7;
+    }
+
+    .card a {
+      color: #80b8d0;
+      text-decoration: none;
+    }
+
+    .card a:hover { text-decoration: underline; }
+
+    /* This Week - open windows */
+    .window-item {
+      border-left: 3px solid #4a7c59;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      background: rgba(74, 124, 89, 0.08);
+      border-radius: 0 4px 4px 0;
+    }
+
+    .window-item.no-action {
+      border-left-color: #5a5a6a;
+      background: rgba(90, 90, 106, 0.08);
+    }
+
+    .window-item .headline {
+      font-size: 14px;
+      font-weight: 700;
+      color: #e0dcd0;
+      margin-bottom: 4px;
+    }
+
+    .window-item .summary {
+      font-size: 13px;
+      color: #a8a498;
+      margin-bottom: 6px;
+    }
+
+    .window-item .why {
+      font-size: 13px;
+      color: #80b8d0;
+      font-style: italic;
+    }
+
+    .stage-badge {
+      display: inline-block;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.3rem;
+      padding: 2px 6px;
+      border-radius: 2px;
+      margin-bottom: 6px;
+      background: rgba(139, 105, 20, 0.2);
+      color: #d0b040;
+      letter-spacing: 0.5px;
+    }
+
+    /* Recommendations */
+    .rec-item {
+      border: 1px solid rgba(74, 124, 89, 0.4);
+      background: rgba(74, 124, 89, 0.1);
+      border-radius: 6px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .rec-item .action {
+      font-size: 14px;
+      font-weight: 700;
+      color: #e0dcd0;
+      margin-bottom: 6px;
+    }
+
+    .rec-item .rationale {
+      font-size: 13px;
+      color: #a8a498;
+      margin-bottom: 8px;
+    }
+
+    .rec-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .rec-meta span {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.3rem;
+      padding: 2px 6px;
+      border-radius: 2px;
+    }
+
+    .meta-deadline { background: rgba(192, 64, 64, 0.2); color: #e08080; }
+    .meta-effort { background: rgba(74, 124, 89, 0.2); color: #80c090; }
+    .meta-legal { background: rgba(208, 176, 64, 0.2); color: #d0c060; }
+
+    .rec-channel {
+      font-size: 12px;
+      color: #808078;
+      margin-top: 6px;
+    }
+
+    .draft-toggle {
+      margin-top: 10px;
+      border: 1px solid rgba(139, 105, 20, 0.3);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .draft-toggle summary {
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #80b8d0;
+      cursor: pointer;
+      background: rgba(0,0,0,0.15);
+    }
+
+    .draft-toggle .draft-text {
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #c8c4b8;
+      white-space: pre-wrap;
+      background: rgba(0,0,0,0.1);
+      border-top: 1px solid rgba(139, 105, 20, 0.2);
+    }
+
+    .action-btn {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 6px 14px;
+      background: #4a7c59;
+      color: #e8dcc4;
+      border: 1px solid #3a5c40;
+      border-radius: 4px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.35rem;
+      text-decoration: none;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+    }
+
+    .action-btn:hover { background: #5a9c6a; text-decoration: none; }
+
+    /* History */
+    .digest-entry {
+      border: 1px solid rgba(139, 105, 20, 0.2);
+      border-radius: 6px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+
+    .digest-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgba(0,0,0,0.15);
+      cursor: pointer;
+    }
+
+    .digest-header:hover { background: rgba(0,0,0,0.25); }
+
+    .digest-date {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.4rem;
+      color: #f0c020;
+    }
+
+    .digest-stats {
+      font-size: 12px;
+      color: #908c80;
+    }
+
+    .digest-body {
+      display: none;
+      padding: 16px;
+      border-top: 1px solid rgba(139, 105, 20, 0.2);
+    }
+
+    .digest-body.open { display: block; }
+
+    .sent-badge {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.3rem;
+      padding: 2px 6px;
+      border-radius: 2px;
+      background: rgba(74, 124, 89, 0.2);
+      color: #80c090;
+    }
+
+    /* Preferences */
+    .pref-section {
+      margin-bottom: 20px;
+    }
+
+    .pref-section h4 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.4rem;
+      color: #d0b040;
+      margin-bottom: 10px;
+    }
+
+    .pref-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(224,220,208,0.08);
+    }
+
+    .pref-item .pref-label {
+      font-size: 13px;
+      color: #c8c4b8;
+      flex: 1;
+      margin-right: 12px;
+    }
+
+    .pref-buttons {
+      display: flex;
+      gap: 4px;
+    }
+
+    .pref-btn {
+      padding: 4px 10px;
+      border: 1px solid rgba(139, 105, 20, 0.3);
+      border-radius: 3px;
+      background: none;
+      color: #908c80;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pref-btn:hover { border-color: #8b6914; color: #e0dcd0; }
+    .pref-btn.active { background: #4a7c59; color: #e8dcc4; border-color: #3a5c40; }
+    .pref-btn.active-disagree { background: #9a4a4a; color: #e8dcc4; border-color: #7a3a3a; }
+
+    .pref-textarea {
+      width: 100%;
+      min-height: 70px;
+      padding: 10px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(139, 105, 20, 0.3);
+      border-radius: 4px;
+      color: #c8c4b8;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      resize: vertical;
+    }
+
+    .pref-textarea:focus {
+      outline: none;
+      border-color: #8b6914;
+    }
+
+    .pref-select {
+      padding: 6px 10px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(139, 105, 20, 0.3);
+      border-radius: 4px;
+      color: #c8c4b8;
+      font-size: 13px;
+    }
+
+    .saved-indicator {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.35rem;
+      color: #4a7c59;
+      opacity: 0;
+      transition: opacity 0.3s;
+      margin-left: 8px;
+    }
+
+    .saved-indicator.show { opacity: 1; }
+
+    /* Sources */
+    .source-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(224,220,208,0.06);
+    }
+
+    .source-item .source-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #c8c4b8;
+    }
+
+    .source-item .source-type {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.3rem;
+      padding: 2px 6px;
+      border-radius: 2px;
+      background: rgba(139, 105, 20, 0.15);
+      color: #d0b040;
+    }
+
+    .source-url {
+      font-size: 11px;
+      color: #706c60;
+      word-break: break-all;
+    }
+
+    /* Empty states */
+    .empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: #706c60;
+      font-style: italic;
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.4rem;
+      color: #908c80;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .loading span { animation: blink 1.2s infinite; }
+
+    /* Card entrance animation */
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      animation: cardIn 0.4s ease-out both;
+    }
+
+    .card:nth-child(2) { animation-delay: 0.08s; }
+    .card:nth-child(3) { animation-delay: 0.16s; }
+    .card:nth-child(4) { animation-delay: 0.24s; }
+
+    /* Recommendation urgency pulse */
+    @keyframes urgentPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .meta-deadline.urgent {
+      animation: urgentPulse 2s ease-in-out infinite;
+    }
+
+    /* Panel transitions */
+    .panel {
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .panel.active {
+      opacity: 1;
+    }
+
+    /* Mobile */
+    @media (max-width: 600px) {
+      .app { padding: 12px; }
+      .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 0; }
+      .tab { padding: 8px 10px; font-size: 0.33rem; white-space: nowrap; }
+      .card { padding: 12px; margin-bottom: 12px; }
+      .card h3 { font-size: 0.38rem; }
+      .header { flex-direction: column; gap: 6px; align-items: flex-start; padding: 12px 0; }
+      .header h1 { font-size: 0.42rem; }
+      .header .user-info { font-size: 11px; }
+      .pref-item { flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px 0; }
+      .pref-label { font-size: 12px; }
+      .pref-buttons { width: 100%; display: flex; }
+      .pref-btn { flex: 1; text-align: center; padding: 8px 6px; font-size: 10px; }
+      .pref-section h4 { font-size: 0.35rem; }
+      .pref-textarea { font-size: 14px; }
+      .rec-item { padding: 10px; }
+      .rec-item .action { font-size: 13px; }
+      .rec-item .rationale { font-size: 12px; }
+      .rec-meta { gap: 4px; }
+      .rec-meta span { font-size: 0.25rem; }
+      .action-btn { font-size: 0.3rem; padding: 8px 12px; }
+      .window-item { padding: 8px 10px; }
+      .window-item .headline { font-size: 13px; }
+      .window-item .summary { font-size: 12px; }
+      .window-item .why { font-size: 12px; }
+      .stage-badge { font-size: 0.25rem; }
+      .digest-header { flex-direction: column; gap: 4px; align-items: flex-start; }
+      .digest-date { font-size: 0.35rem; }
+      .digest-body { padding: 12px; }
+      .source-item { flex-direction: column; gap: 4px; align-items: flex-start; }
+      .source-url { font-size: 10px; }
+      .draft-toggle summary { font-size: 11px; padding: 6px 10px; }
+      .draft-toggle .draft-text { font-size: 11px; padding: 8px 10px; }
+      .rec-channel { font-size: 11px; }
+      canvas#scene { display: none; }
+      .canvas-fade { display: none; }
+      body { background: #0a0a18; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+  <div class="canvas-fade"></div>
+
+  <div class="app">
+    <div class="header">
+      <h1>UBL CONSOLE</h1>
+      <div class="user-info">
+        <span id="user-email"></span>
+        <span class="district-badge" id="user-district"></span>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('week')">THIS WEEK</button>
+      <button class="tab" onclick="switchTab('history')">HISTORY</button>
+      <button class="tab" onclick="switchTab('prefs')">PREFERENCES</button>
+      <button class="tab" onclick="switchTab('sources')">SOURCES</button>
+    </div>
+
+    <!-- THIS WEEK -->
+    <div class="panel active" id="panel-week">
+      <div class="loading" id="week-loading"><span>LOADING...</span></div>
+
+      <div id="week-digest-btn"></div>
+      <div id="week-recs"></div>
+      <div id="week-items"></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="panel" id="panel-history">
+      <div class="loading" id="history-loading"><span>LOADING...</span></div>
+      <div id="history-list"></div>
+    </div>
+
+    <!-- PREFERENCES -->
+    <div class="panel" id="panel-prefs">
+      <div class="loading" id="prefs-loading"><span>LOADING...</span></div>
+      <div id="prefs-content"></div>
+    </div>
+
+    <!-- SOURCES -->
+    <div class="panel" id="panel-sources">
+      <div class="card">
+        <h3>RSS FEEDS</h3>
+        <div class="source-item"><span class="source-name">Mission Local</span><span class="source-type">CRITICAL</span></div>
+        <div class="source-url">missionlocal.org/feed/</div>
+        <div class="source-item"><span class="source-name">48 Hills</span><span class="source-type">CRITICAL</span></div>
+        <div class="source-url">48hills.org/feed</div>
+        <div class="source-item"><span class="source-name">Streetsblog SF</span><span class="source-type">CRITICAL</span></div>
+        <div class="source-url">sf.streetsblog.org/feed</div>
+        <div class="source-item"><span class="source-name">SF Standard</span><span class="source-type">HIGH</span></div>
+        <div class="source-url">sfstandard.com/feed + /category/politics/feed</div>
+        <div class="source-item"><span class="source-name">SFist</span><span class="source-type">MEDIUM</span></div>
+        <div class="source-url">sfist.com/rss</div>
+        <div class="source-item"><span class="source-name">GrowSF</span><span class="source-type">MEDIUM</span></div>
+        <div class="source-url">report.growsf.org/feed</div>
+        <div class="source-item"><span class="source-name">The Frisc</span><span class="source-type">MEDIUM</span></div>
+        <div class="source-url">thefrisc.com/feed/</div>
+        <div class="source-item"><span class="source-name">SF Public Press</span><span class="source-type">MEDIUM</span></div>
+        <div class="source-url">sfpublicpress.org/feed</div>
+      </div>
+
+      <div class="card">
+        <h3>GOVERNMENT DATA</h3>
+        <div class="source-item"><span class="source-name">SF.gov Meetings API</span><span class="source-type">API</span></div>
+        <div class="source-url">api.sf.gov/api/v2/pages/?type=sf.Meeting</div>
+        <div class="source-item"><span class="source-name">Campaign Finance (DataSF)</span><span class="source-type">API</span></div>
+        <div class="source-url">data.sfgov.org/resource/pitq-e56w.json</div>
+      </div>
+
+      <div class="card">
+        <h3>INTELLIGENCE LAYER</h3>
+        <p>Articles are classified by Haiku 4.5. Digests and leverage assessments use Sonnet 4.5 with extended thinking and a 6-lens political diagnostic framework.</p>
+        <br>
+        <p>The system runs a structured analysis on every issue: block-or-build vector, latent land-use check, venue/decidability, procedural leverage point, outcome durability, and scope-of-conflict strategy.</p>
+        <br>
+        <p style="font-size: 12px; color: #706c60;">Political context updated: see sf_political_context.md and sf_political_grammar.md</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Canvas: subtle starry sky -->
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    // Detect mobile for performance
+    const isMobile = window.innerWidth < 600;
+
+    // Stars
+    const stars = [];
+    const starCount = isMobile ? 40 : 100;
+    for (let i = 0; i < starCount; i++) {
+      stars.push({ x: Math.random(), y: Math.random() * 0.5, s: 0.5 + Math.random() * 1.5, p: Math.random() * Math.PI * 2, tw: 0.3 + Math.random() * 0.7 });
+    }
+
+    // Fog layers
+    const fogLayers = [];
+    const fogCount = isMobile ? 4 : 8;
+    for (let i = 0; i < fogCount; i++) {
+      fogLayers.push({ y: 0.55 + Math.random() * 0.35, speed: 0.0001 + Math.random() * 0.0003, offset: Math.random() * Math.PI * 2, opacity: 0.03 + Math.random() * 0.04, height: 0.05 + Math.random() * 0.08 });
+    }
+
+    function render() {
+      const W = canvas.width, H = canvas.height;
+      const t = Date.now() * 0.001;
+
+      // Night sky
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#060816');
+      grad.addColorStop(0.15, '#0e1028');
+      grad.addColorStop(0.35, '#161636');
+      grad.addColorStop(0.48, '#201828');
+      grad.addColorStop(0.56, '#281820');
+      grad.addColorStop(0.62, '#181018');
+      grad.addColorStop(1, '#080610');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Stars
+      for (const s of stars) {
+        const a = 0.15 + Math.sin(t * s.tw + s.p) * 0.35;
+        if (a > 0.05) {
+          ctx.fillStyle = `rgba(255,235,190,${a})`;
+          ctx.fillRect(s.x * W, s.y * H, s.s, s.s);
+        }
+      }
+
+      const silY = H * 0.6;
+
+      // Seeded hash for persistent randomness
+      function wh(a, b, c) {
+        let h = (a * 2654435761 ^ b * 2246822519 ^ c * 3266489917) >>> 0;
+        return (h & 0xffff) / 0xffff;
+      }
+
+      // ── Marin Headlands — hilly landmass on far left ──
+      const headlandY = silY - H * 0.02;
+      ctx.fillStyle = '#141425';
+      ctx.beginPath();
+      ctx.moveTo(0, silY);
+      ctx.lineTo(0, headlandY - H * 0.06);
+      ctx.quadraticCurveTo(W * 0.03, headlandY - H * 0.10, W * 0.07, headlandY - H * 0.07);
+      ctx.quadraticCurveTo(W * 0.10, headlandY - H * 0.04, W * 0.13, headlandY - H * 0.06);
+      ctx.quadraticCurveTo(W * 0.16, headlandY - H * 0.09, W * 0.18, headlandY - H * 0.05);
+      ctx.quadraticCurveTo(W * 0.22, headlandY + H * 0.01, W * 0.25, silY);
+      ctx.closePath();
+      ctx.fill();
+
+      // ── Golden Gate Bridge — from Marin headlands to SF ──
+      const bridgeY = silY - H * 0.04;
+      const towerH = H * 0.11;
+      const t1x = W * 0.08, t2x = W * 0.22;
+
+      // Deck
+      ctx.fillStyle = 'rgba(150,62,38,0.4)';
+      ctx.fillRect(t1x - W * 0.02, bridgeY, t2x - t1x + W * 0.06, 1.5);
+
+      // Towers
+      ctx.fillStyle = 'rgba(165,70,42,0.5)';
+      ctx.fillRect(t1x - 1, bridgeY - towerH, 3, towerH + 2);
+      ctx.fillRect(t2x - 1, bridgeY - towerH, 3, towerH + 2);
+      // Highlight
+      ctx.fillStyle = 'rgba(200,85,55,0.3)';
+      ctx.fillRect(t1x - 1, bridgeY - towerH, 1, towerH + 2);
+      ctx.fillRect(t2x - 1, bridgeY - towerH, 1, towerH + 2);
+
+      // Main cable catenary
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(160,68,40,0.4)';
+      ctx.lineWidth = 0.8;
+      for (let x = t1x; x <= t2x; x++) {
+        const ct = (x - t1x) / (t2x - t1x);
+        const sag = towerH * 0.5 * 4 * (ct - 0.5) * (ct - 0.5);
+        const cy = bridgeY - towerH + towerH * 0.5 - sag;
+        if (x === t1x) ctx.moveTo(x, cy); else ctx.lineTo(x, cy);
+      }
+      ctx.stroke();
+
+      // Approach cables
+      ctx.strokeStyle = 'rgba(140,60,35,0.3)';
+      ctx.lineWidth = 0.6;
+      ctx.beginPath(); ctx.moveTo(t1x - W * 0.02, bridgeY); ctx.lineTo(t1x, bridgeY - towerH); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(t2x + W * 0.04, bridgeY); ctx.lineTo(t2x, bridgeY - towerH); ctx.stroke();
+
+      // Suspenders
+      ctx.strokeStyle = 'rgba(140,60,35,0.2)';
+      ctx.lineWidth = 0.4;
+      for (let x = t1x + 3; x < t2x; x += 4) {
+        const ct = (x - t1x) / (t2x - t1x);
+        const sag = towerH * 0.5 * 4 * (ct - 0.5) * (ct - 0.5);
+        const cableY = bridgeY - towerH + towerH * 0.5 - sag;
+        ctx.beginPath(); ctx.moveTo(x, cableY); ctx.lineTo(x, bridgeY); ctx.stroke();
+      }
+
+      // Warning lights
+      if (Math.sin(t * 1.5) > 0.5) {
+        ctx.fillStyle = 'rgba(255,50,40,0.5)';
+        ctx.fillRect(t1x - 1, bridgeY - towerH - 2, 2, 2);
+        ctx.fillRect(t2x - 1, bridgeY - towerH - 2, 2, 2);
+        ctx.fillStyle = 'rgba(255,50,40,0.06)';
+        ctx.beginPath(); ctx.arc(t1x, bridgeY - towerH - 1, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(t2x, bridgeY - towerH - 1, 5, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // ── Fog layer 1 — between bridge and far buildings ──
+      function drawFogBand(fogY, fogH, opacity, speedMul) {
+        const drift = (t * speedMul + fogY * 3) % (Math.PI * 2);
+        const fogGrad = ctx.createLinearGradient(0, fogY - fogH / 2, 0, fogY + fogH / 2);
+        fogGrad.addColorStop(0, 'rgba(170,180,200,0)');
+        fogGrad.addColorStop(0.35, `rgba(170,180,200,${opacity * (0.6 + Math.sin(drift) * 0.4)})`);
+        fogGrad.addColorStop(0.65, `rgba(155,165,185,${opacity * (0.5 + Math.sin(drift + 1.2) * 0.3)})`);
+        fogGrad.addColorStop(1, 'rgba(170,180,200,0)');
+        ctx.fillStyle = fogGrad;
+        ctx.beginPath();
+        ctx.moveTo(0, fogY + fogH / 2);
+        for (let x = 0; x <= W; x += 6) {
+          const wave = Math.sin(x * 0.004 + drift * 2.5) * fogH * 0.35
+                     + Math.sin(x * 0.009 + drift * 1.2) * fogH * 0.15;
+          ctx.lineTo(x, fogY - fogH / 2 + wave);
+        }
+        ctx.lineTo(W, fogY + fogH / 2);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      drawFogBand(silY - H * 0.03, H * 0.06, 0.06, 0.03);
+
+      // ── SF Skyline — Layer 1: far background ──
+      const L1 = [
+        [0.55,0.03],[0.59,0.05],[0.63,0.04],[0.67,0.06],[0.71,0.04],[0.75,0.07],
+        [0.79,0.05],[0.83,0.06],[0.87,0.04],[0.91,0.07],[0.95,0.05],[0.99,0.04],
+      ];
+      for (const [bx, bh] of L1) {
+        ctx.fillStyle = '#1a1a2c';
+        ctx.fillRect(bx * W, silY - bh * H, W * 0.022, bh * H + 1);
+      }
+
+      // ── Fog layer 2 — between layer 1 and 2 ──
+      drawFogBand(silY + H * 0.01, H * 0.05, 0.045, 0.025);
+
+      // ── Layer 2: mid-ground — right side ──
+      const L2 = [
+        // Low approach from center
+        [0.55,0.05,0.022],[0.59,0.08,0.025],
+        // Rising
+        [0.63,0.11,0.028],[0.67,0.07,0.022],
+        // FiDi cluster
+        [0.70,0.14,0.020],[0.73,0.09,0.018],[0.76,0.17,0.024],[0.79,0.11,0.020],
+        [0.82,0.15,0.022],[0.85,0.08,0.018],
+        // Falling off right edge
+        [0.88,0.12,0.025],[0.92,0.07,0.020],[0.96,0.09,0.022],[1.0,0.05,0.020],
+      ];
+      for (const [bx, bh, bw] of L2) {
+        ctx.fillStyle = '#181828';
+        ctx.fillRect(bx * W, silY - bh * H, bw * W, bh * H + 1);
+      }
+
+      // L2 windows (very dim, very slow)
+      for (const [bx, bh, bw] of L2) {
+        if (bh < 0.08) continue;
+        const x = bx * W, h = bh * H, w = bw * W;
+        for (let row = 0; row < Math.floor(h / 9); row++) {
+          for (let col = 0; col < Math.floor(w / 5); col++) {
+            const r = wh(Math.floor(bx * 1000), row, col);
+            const cycle = Math.sin(t * (0.005 + r * 0.015) + r * 100);
+            if (cycle > 0.2 + r * 0.5) {
+              ctx.fillStyle = `rgba(255,220,150,${0.04 + r * 0.04})`;
+              ctx.fillRect(x + 2 + col * 5, silY - h + 3 + row * 9, 2, 2);
+            }
+          }
+        }
+      }
+
+      // ── Fog layer 3 — between layer 2 and 3, thickest ──
+      drawFogBand(silY + H * 0.04, H * 0.07, 0.055, 0.02);
+
+      // ── Layer 3: foreground — FiDi cluster right side ──
+      const L3 = [
+        // Low approach
+        [0.52,0.04,0.025],[0.56,0.06,0.022],
+        // Civic Center area
+        [0.60,0.09,0.028],[0.64,0.07,0.024],
+        // Rising toward FiDi
+        [0.67,0.13,0.022],[0.70,0.10,0.020],
+        // FiDi cluster
+        [0.73,0.18,0.020],[0.76,0.14,0.018],
+        // (Transamerica and Salesforce drawn separately below)
+        [0.80,0.16,0.022],[0.83,0.12,0.018],
+        [0.87,0.17,0.020],[0.90,0.13,0.024],
+        // SoMa falling off edge
+        [0.93,0.10,0.028],[0.97,0.07,0.025],[1.01,0.05,0.028],
+      ];
+      for (const [bx, bh, bw] of L3) {
+        ctx.fillStyle = '#121220';
+        ctx.fillRect(bx * W, silY - bh * H, bw * W, bh * H + 1);
+        ctx.fillStyle = 'rgba(45,38,60,0.3)';
+        ctx.fillRect(bx * W, silY - bh * H, 1, bh * H);
+      }
+
+      // ── Transamerica Pyramid — narrow triangular spire ──
+      const taX = W * 0.785, taBaseW = W * 0.018, taH = H * 0.26;
+      const taBaseY = silY;
+      ctx.fillStyle = '#141220';
+      ctx.beginPath();
+      ctx.moveTo(taX, taBaseY);
+      ctx.lineTo(taX + taBaseW, taBaseY);
+      // Taper: wider at bottom, pointy at top with slight wings at base
+      ctx.lineTo(taX + taBaseW * 0.65, taBaseY - taH * 0.7);
+      ctx.lineTo(taX + taBaseW * 0.52, taBaseY - taH);
+      ctx.lineTo(taX + taBaseW * 0.48, taBaseY - taH);
+      ctx.lineTo(taX + taBaseW * 0.35, taBaseY - taH * 0.7);
+      ctx.closePath();
+      ctx.fill();
+      // Edge highlight
+      ctx.strokeStyle = 'rgba(50,42,70,0.4)';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(taX, taBaseY);
+      ctx.lineTo(taX + taBaseW * 0.48, taBaseY - taH);
+      ctx.stroke();
+      // Spire tip
+      ctx.fillStyle = 'rgba(60,50,80,0.5)';
+      ctx.fillRect(taX + taBaseW * 0.47, taBaseY - taH - H * 0.015, 1, H * 0.015);
+      // Pyramid windows — sparse, following the taper
+      for (let row = 0; row < Math.floor(taH / 8); row++) {
+        const rowY = taBaseY - 4 - row * 8;
+        const taper = 1 - (row * 8) / taH;
+        const rowW = taBaseW * taper;
+        const rowX = taX + (taBaseW - rowW) / 2;
+        const cols = Math.max(1, Math.floor(rowW / 4));
+        for (let col = 0; col < cols; col++) {
+          const r = wh(785 + row, col, 1);
+          if (Math.sin(t * (0.004 + r * 0.01) + r * 150) > 0.1 + r * 0.6) {
+            ctx.fillStyle = `rgba(255,225,160,${0.08 + r * 0.12})`;
+            ctx.fillRect(rowX + 1 + col * 4, rowY, 2, 3);
+          }
+        }
+      }
+
+      // ── Salesforce Tower — tallest, rounded top ──
+      const sfX = W * 0.85, sfW = W * 0.018, sfH = H * 0.34;
+      const sfBaseY = silY;
+      ctx.fillStyle = '#121020';
+      // Main shaft
+      ctx.fillRect(sfX, sfBaseY - sfH + H * 0.03, sfW, sfH - H * 0.03);
+      // Rounded top — semicircle-ish
+      ctx.beginPath();
+      ctx.ellipse(sfX + sfW / 2, sfBaseY - sfH + H * 0.03, sfW / 2, H * 0.03, 0, Math.PI, 0);
+      ctx.fill();
+      // Edge highlights
+      ctx.fillStyle = 'rgba(45,38,65,0.35)';
+      ctx.fillRect(sfX, sfBaseY - sfH + H * 0.03, 1, sfH - H * 0.03);
+      ctx.fillStyle = 'rgba(35,28,55,0.25)';
+      ctx.fillRect(sfX + sfW - 1, sfBaseY - sfH + H * 0.03, 1, sfH - H * 0.03);
+      // Crown light
+      const crownGlow = Math.sin(t * 0.8) * 0.3 + 0.5;
+      ctx.fillStyle = `rgba(180,200,255,${crownGlow * 0.12})`;
+      ctx.beginPath();
+      ctx.arc(sfX + sfW / 2, sfBaseY - sfH, 3, 0, Math.PI * 2);
+      ctx.fill();
+      // Tower windows — vertical bands
+      for (let row = 0; row < Math.floor((sfH - H * 0.04) / 6); row++) {
+        for (let col = 0; col < Math.max(1, Math.floor(sfW / 4)); col++) {
+          const r = wh(850 + row, col, 2);
+          if (Math.sin(t * (0.003 + r * 0.008) + r * 200) > -0.1 + r * 0.7) {
+            const warmth = wh(col * 9, row * 19, 850);
+            ctx.fillStyle = `rgba(200,${210 + warmth * 40},${230 + warmth * 25},${0.06 + r * 0.1})`;
+            ctx.fillRect(sfX + 2 + col * 4, sfBaseY - sfH + H * 0.04 + row * 6, 2.5, 3.5);
+          }
+        }
+      }
+
+      // L3 windows (brighter, varied colors, VERY slow individual cycles)
+      for (const [bx, bh, bw] of L3) {
+        if (bh < 0.06) continue;
+        const x = bx * W, h = bh * H, w = bw * W;
+        for (let row = 0; row < Math.floor(h / 7); row++) {
+          for (let col = 0; col < Math.floor(w / 4.5); col++) {
+            const r = wh(Math.floor(bx * 1000) + 777, row, col);
+            // Very slow: 30-120 second full cycles per window
+            const speed = 0.003 + r * 0.012;
+            const phase = r * 200;
+            const cycle = Math.sin(t * speed + phase);
+            if (cycle > -0.2 + r * 0.8) {
+              const warmth = wh(col * 11, row * 17, Math.floor(bx * 100));
+              const red = 255;
+              const green = Math.floor(185 + warmth * 55);
+              const blue = Math.floor(90 + warmth * 90);
+              const brightness = 0.08 + (cycle * 0.5 + 0.5) * 0.18;
+              ctx.fillStyle = `rgba(${red},${green},${blue},${brightness})`;
+              ctx.fillRect(x + 1 + col * 4.5, silY - h + 2 + row * 7, 2.5, 3.5);
+            }
+          }
+        }
+      }
+
+      // ── Fog layer 4 — low-hanging, partially covers nearest buildings ──
+      drawFogBand(silY + H * 0.08, H * 0.06, 0.04, 0.015);
+
+      // Horizon fill
+      ctx.fillStyle = '#0e0e1a';
+      ctx.fillRect(0, silY, W, 2);
+
+      // Bay water
+      const waterGrad = ctx.createLinearGradient(0, silY, 0, H);
+      waterGrad.addColorStop(0, '#0e1828');
+      waterGrad.addColorStop(0.3, '#0a1420');
+      waterGrad.addColorStop(1, '#080e18');
+      ctx.fillStyle = waterGrad;
+      ctx.fillRect(0, silY + 2, W, H - silY);
+
+      // ── Fog layer 5 — over the water ──
+      drawFogBand(silY + H * 0.15, H * 0.08, 0.035, 0.018);
+
+      // Bridge reflection — faint orange on water, left side only
+      for (let x = 0; x < t2x + W * 0.03; x += 3) {
+        const r = wh(Math.floor(x), 999, 0);
+        const wobble = Math.sin(t * 0.5 + x * 0.04 + r * 10) * 4;
+        const shimmer = Math.sin(t * 0.7 + x * 0.02 + r * 20) * 0.5 + 0.5;
+        if (shimmer > 0.4) {
+          ctx.fillStyle = `rgba(170,65,38,${shimmer * 0.04})`;
+          ctx.fillRect(x, silY + 5 + wobble, 2, 1);
+        }
+      }
+
+      // Moonlight on water
+      for (let x = 0; x < W; x += 5) {
+        const r = wh(Math.floor(x), 888, 0);
+        const shimmer = Math.sin(t * 0.35 + x * 0.01 + r * 15) * 0.5 + 0.5;
+        if (shimmer > 0.6) {
+          const wy = silY + 5 + Math.sin(t * 0.3 + x * 0.03) * 3 + r * 3;
+          ctx.fillStyle = `rgba(150,170,210,${shimmer * 0.03})`;
+          ctx.fillRect(x, wy, 2, 1);
+        }
+      }
+
+      // Fog layers — drift slowly across
+      for (const fog of fogLayers) {
+        const fogY = fog.y * H;
+        const fogH = fog.height * H;
+        const drift = (t * fog.speed * 1000 + fog.offset) % (Math.PI * 2);
+
+        const fogGrad = ctx.createLinearGradient(0, fogY - fogH / 2, 0, fogY + fogH / 2);
+        fogGrad.addColorStop(0, 'rgba(180,190,210,0)');
+        fogGrad.addColorStop(0.3, `rgba(180,190,210,${fog.opacity * (0.7 + Math.sin(drift) * 0.3)})`);
+        fogGrad.addColorStop(0.7, `rgba(160,170,190,${fog.opacity * (0.5 + Math.sin(drift + 1) * 0.3)})`);
+        fogGrad.addColorStop(1, 'rgba(180,190,210,0)');
+        ctx.fillStyle = fogGrad;
+
+        // Wavy fog shape
+        ctx.beginPath();
+        ctx.moveTo(0, fogY + fogH / 2);
+        for (let x = 0; x <= W; x += 8) {
+          const wave = Math.sin(x * 0.003 + drift * 3) * fogH * 0.3 + Math.sin(x * 0.008 + drift * 1.5) * fogH * 0.15;
+          ctx.lineTo(x, fogY - fogH / 2 + wave);
+        }
+        ctx.lineTo(W, fogY + fogH / 2);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      requestAnimationFrame(render);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+    render();
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://fueuwdhhuvnrxiwzrqee.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1ZXV3ZGhodXZucnhpd3pycWVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNDAzMzYsImV4cCI6MjA5MTYxNjMzNn0.wmlFet8PpNgXGBPnrXHOXtzFs1HxLkcQIAHBRDitDpo';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const params = new URLSearchParams(window.location.search);
+    let uid = params.get('uid');  // legacy/dev fallback; session auth is primary
+
+    let userData = null;
+    let digestsData = [];
+    let articlesData = [];
+
+    // ─── TAB SWITCHING ───
+    function switchTab(name) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+      document.getElementById(`panel-${name}`).classList.add('active');
+    }
+
+    // ─── LOAD USER ───
+    async function loadUser() {
+      if (!uid) return;
+      const { data } = await sb.from('users').select('*').eq('id', uid).single();
+      if (data) {
+        userData = data;
+        document.getElementById('user-email').textContent = data.email;
+        document.getElementById('user-district').textContent = data.district || '??';
+      }
+    }
+
+    // ─── THIS WEEK ───
+    async function loadThisWeek() {
+      const el = document.getElementById('week-loading');
+      const btnEl = document.getElementById('week-digest-btn');
+      const recsEl = document.getElementById('week-recs');
+      const itemsEl = document.getElementById('week-items');
+
+      // Load latest digest
+      const { data: digests } = await sb
+        .from('digests')
+        .select('*')
+        .eq('user_id', uid)
+        .order('week_of', { ascending: false })
+        .limit(1);
+
+      // Load recent articles
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: articles } = await sb
+        .from('articles')
+        .select('*')
+        .gte('published_at', since)
+        .order('published_at', { ascending: false })
+        .limit(20);
+
+      el.style.display = 'none';
+
+      // Render latest digest
+      if (digests && digests.length > 0) {
+        const digest = digests[0];
+        const content = digest.content || {};
+        const leverage = content.leverage || {};
+        const recs = leverage.recommendations || [];
+        const items = content.items || [];
+        const reasoning = leverage.reasoning_summary || '';
+        const weekOf = new Date(digest.week_of).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        const sent = digest.email_sent_at;
+
+        btnEl.innerHTML = `
+          <div class="card" style="text-align: center; padding: 16px;">
+            <h3>WEEKLY DIGEST — ${esc(weekOf)}</h3>
+            ${sent ? '<span class="sent-badge">EMAILED</span>' : '<span style="font-family: Press Start 2P; font-size: 0.3rem; color: #908c80;">NOT YET SENT</span>'}
+            ${reasoning ? `<p style="margin-top: 10px; font-size: 13px; color: #a8a498; font-style: italic;">${esc(reasoning)}</p>` : ''}
+          </div>
+        `;
+
+        if (recs.length > 0) {
+          currentDigestId = digest.id;
+          currentRecs = recs;
+          recsEl.innerHTML = '<div class="card"><h3>OPEN WINDOWS</h3>' +
+            recs.map((r, ri) => `
+              <div class="rec-item">
+                <div class="rec-meta">
+                  ${r.deadline ? `<span class="meta-deadline">${esc(r.deadline)}</span>` : ''}
+                  ${r.effort_estimate ? `<span class="meta-effort">${esc(r.effort_estimate)}</span>` : ''}
+                  ${r.legal_weight && r.legal_weight !== 'none' ? `<span class="meta-legal">${esc(r.legal_weight)}</span>` : ''}
+                </div>
+                <div class="action">${esc(r.action)}</div>
+                <div class="rationale">${esc(r.rationale)}</div>
+                ${r.scope_advice ? `<div style="font-size: 12px; color: #a080d0; background: rgba(160,128,208,0.1); padding: 4px 8px; border-radius: 3px; margin-top: 6px;">Strategy: ${esc(r.scope_advice)}</div>` : ''}
+                ${r.channel ? `<div class="rec-channel">Send to: ${esc(r.channel)}</div>` : ''}
+                ${r.recipient ? `<div class="rec-channel">Read by: ${esc(r.recipient)}</div>` : ''}
+                ${r.draft_text && r.channel && r.channel.includes('@') ? `
+                  <a class="action-btn" href="${buildMailto(r.channel, r.draft_text)}" style="margin-top: 10px; display: inline-block;"
+                     onclick="trackAction(${ri}, 'opened_draft')">
+                    ${r.action_type === 'public_comment' || r.action_type === 'ceqa_comment' ? 'SUBMIT COMMENT' : 'SEND EMAIL'} →
+                  </a>
+                  <span style="font-size: 11px; color: #706c60; margin-left: 8px;">Opens in your email app</span>
+                  <div style="margin-top: 8px;">
+                    <button class="pref-btn" id="did-it-${ri}" onclick="confirmAction(${ri}, this)">✓ I sent it</button>
+                  </div>
+                ` : ''}
+                ${r.action_type === 'vote' ? `<a class="action-btn" href="https://sfelections.sfgov.org/find-your-poll" target="_blank" onclick="trackAction(${ri}, 'opened_draft')">FIND POLLING PLACE →</a>` : ''}
+                ${r.draft_text ? `
+                  <details class="draft-toggle">
+                    <summary>View & edit draft text</summary>
+                    <div class="draft-text">${esc(r.draft_text)}</div>
+                  </details>
+                ` : ''}
+              </div>
+            `).join('') + '</div>';
+        }
+
+        if (items.length > 0) {
+          itemsEl.innerHTML = '<div class="card"><h3>WHAT\'S MOVING</h3>' +
+            items.map(item => `
+              <div class="window-item ${item.has_action_window ? '' : 'no-action'}">
+                ${item.decision_stage && item.decision_stage !== 'none' ? `<span class="stage-badge">${esc(item.decision_stage)}</span>` : ''}
+                <div class="headline">${esc(item.headline)}</div>
+                <div class="summary">${esc(item.summary)}</div>
+                <div class="why">${esc(item.why_it_matters)}</div>
+              </div>
+            `).join('') + '</div>';
+        }
+      }
+
+      // Recent articles
+      if (articles && articles.length > 0) {
+        const artHtml = '<div class="card"><h3>RECENT ARTICLES (' + articles.length + ')</h3>' +
+          articles.slice(0, 15).map(a => `
+            <div style="padding: 6px 0; border-bottom: 1px solid rgba(224,220,208,0.06);">
+              <a href="${esc(a.url)}" target="_blank" style="font-size: 13px;">${esc(a.title)}</a>
+              <div style="font-size: 11px; color: #706c60; margin-top: 2px;">
+                ${esc(a.source)} · ${a.relevance_score ? (a.relevance_score * 100).toFixed(0) + '% relevant' : ''} · ${a.published_at ? new Date(a.published_at).toLocaleDateString() : ''}
+                ${a.topics && a.topics.length ? ' · ' + a.topics.join(', ') : ''}
+              </div>
+            </div>
+          `).join('') + '</div>';
+        itemsEl.innerHTML += artHtml;
+      }
+
+      if (!digests?.length && !articles?.length) {
+        itemsEl.innerHTML = '<div class="empty">No data yet. Run the pipeline first: python -m ubl.jobs.cron --dry-run</div>';
+      }
+    }
+
+    // ─── HISTORY ───
+    async function loadHistory() {
+      const el = document.getElementById('history-loading');
+      const listEl = document.getElementById('history-list');
+
+      const [{ data: digests }, { data: actions }] = await Promise.all([
+        sb.from('digests').select('*').eq('user_id', uid)
+          .order('week_of', { ascending: false }).limit(20),
+        sb.from('actions').select('*').eq('user_id', uid)
+          .order('clicked_at', { ascending: false }).limit(30),
+      ]);
+
+      el.style.display = 'none';
+
+      // Action track record
+      if (actions && actions.length > 0) {
+        const confirmed = actions.filter(a => a.completed).length;
+        listEl.innerHTML = `
+          <div class="card">
+            <h3>YOUR TRACK RECORD</h3>
+            <p style="margin-bottom: 10px;">${confirmed} action${confirmed === 1 ? '' : 's'} taken · ${actions.length} engagement${actions.length === 1 ? '' : 's'}</p>
+            ${actions.slice(0, 10).map(a => `
+              <div style="padding: 6px 0; border-bottom: 1px solid rgba(224,220,208,0.06); font-size: 13px;">
+                <span style="color: ${a.completed ? '#80c090' : '#908c80'};">${a.completed ? '✓' : '·'}</span>
+                <span style="color: #c8c4b8;">${esc(a.action_description.slice(0, 80))}${a.action_description.length > 80 ? '…' : ''}</span>
+                <span style="font-size: 11px; color: #706c60;"> — ${new Date(a.clicked_at).toLocaleDateString()}</span>
+              </div>
+            `).join('')}
+          </div>`;
+      } else {
+        listEl.innerHTML = '';
+      }
+
+      if (!digests || digests.length === 0) {
+        listEl.innerHTML += '<div class="empty">No digests generated yet.</div>';
+        return;
+      }
+
+      listEl.innerHTML += digests.map((d, i) => {
+        const content = d.content || {};
+        const items = content.items || [];
+        const recs = (content.leverage || {}).recommendations || [];
+        const sent = d.email_sent_at ? 'SENT' : 'DRAFT';
+
+        return `
+          <div class="digest-entry">
+            <div class="digest-header" onclick="toggleDigest(${i})">
+              <span class="digest-date">${new Date(d.week_of).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+              <span class="digest-stats">
+                ${items.length} items · ${recs.length} actions
+                <span class="sent-badge">${sent}</span>
+              </span>
+            </div>
+            <div class="digest-body" id="digest-body-${i}">
+              ${recs.length > 0 ? '<h4 style="font-family: Press Start 2P; font-size: 0.35rem; color: #f0c020; margin-bottom: 8px;">RECOMMENDATIONS</h4>' +
+                recs.map(r => `<div style="margin-bottom: 8px; padding: 8px; background: rgba(74,124,89,0.1); border-radius: 4px;">
+                  <div style="font-size: 13px; font-weight: 700; color: #e0dcd0;">${esc(r.action)}</div>
+                  <div style="font-size: 12px; color: #a8a498; margin-top: 4px;">${esc(r.rationale)}</div>
+                </div>`).join('') : ''}
+              ${items.length > 0 ? '<h4 style="font-family: Press Start 2P; font-size: 0.35rem; color: #f0c020; margin: 12px 0 8px;">ITEMS</h4>' +
+                items.map(it => `<div style="margin-bottom: 6px; padding-left: 10px; border-left: 2px solid #5a5a6a;">
+                  <div style="font-size: 13px; font-weight: 600; color: #c8c4b8;">${esc(it.headline)}</div>
+                  <div style="font-size: 12px; color: #808078;">${esc(it.summary)}</div>
+                </div>`).join('') : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleDigest(i) {
+      const el = document.getElementById(`digest-body-${i}`);
+      el.classList.toggle('open');
+    }
+
+    // ─── PREFERENCES ───
+    const CORE_QUESTIONS = [
+      { key: 'density_my_block', q: "I'd support a 6-story apartment building on my block if it included affordable units" },
+      { key: 'encampment_sweeps', q: "The city should clear encampments from sidewalks even when there aren't enough shelter beds" },
+      { key: 'police_vs_social', q: "I'd rather have more police officers on my street than more social workers" },
+      { key: 'new_condos_help', q: "New market-rate condos help my neighborhood more than they hurt it" },
+      { key: 'worker_paycuts', q: "City workers should take pay cuts before the city cuts services" },
+      { key: 'state_override_housing', q: "Sacramento should be able to override SF's decisions to force more housing" },
+    ];
+
+    const DISTRICTS = ['D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11'];
+
+    async function loadPrefs() {
+      const el = document.getElementById('prefs-loading');
+      const contentEl = document.getElementById('prefs-content');
+      if (!userData) await loadUser();
+      el.style.display = 'none';
+
+      const prefs = userData?.preferences || {};
+      const engage = userData?.engagement_prefs || {};
+      const freetext = prefs.freetext || {};
+
+      contentEl.innerHTML = `
+        <div class="card">
+          <h3>DISTRICT <span class="saved-indicator" id="district-saved">SAVED</span></h3>
+          <select class="pref-select" onchange="saveDistrict(this.value)">
+            <option value="">Not sure</option>
+            ${DISTRICTS.map(d => `<option value="${d}" ${userData?.district === d ? 'selected' : ''}>${d}</option>`).join('')}
+          </select>
+        </div>
+
+        <div class="card">
+          <h3>POSITIONS <span class="saved-indicator" id="positions-saved">SAVED</span></h3>
+          ${CORE_QUESTIONS.map(q => `
+            <div class="pref-item">
+              <span class="pref-label">${esc(q.q)}</span>
+              <div class="pref-buttons">
+                <button class="pref-btn ${prefs[q.key] === 'agree' ? 'active' : ''}" onclick="savePref('${q.key}', 'agree', this)">Agree</button>
+                <button class="pref-btn ${prefs[q.key] === 'neutral' ? 'active' : ''}" onclick="savePref('${q.key}', 'neutral', this)">Neutral</button>
+                <button class="pref-btn ${prefs[q.key] === 'disagree' ? 'active-disagree' : ''}" onclick="savePref('${q.key}', 'disagree', this)">Disagree</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="card">
+          <h3>IN YOUR WORDS <span class="saved-indicator" id="freetext-saved">SAVED</span></h3>
+          <div class="pref-section">
+            <h4>WHAT MATTERS TO YOU</h4>
+            <textarea class="pref-textarea" id="ft-priorities" oninput="debounceFreetext()">${esc(freetext.priorities || '')}</textarea>
+          </div>
+          <div class="pref-section">
+            <h4>TRACKING</h4>
+            <textarea class="pref-textarea" id="ft-tracking" oninput="debounceFreetext()">${esc(freetext.tracking || '')}</textarea>
+          </div>
+          <div class="pref-section">
+            <h4>ABOUT YOU</h4>
+            <textarea class="pref-textarea" id="ft-context" oninput="debounceFreetext()">${esc(freetext.context || '')}</textarea>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>HOW INVOLVED <span class="saved-indicator" id="engage-saved">SAVED</span></h3>
+          <div class="pref-section">
+            <h4>TIME PER WEEK</h4>
+            <div class="pref-buttons">
+              <button class="pref-btn ${engage.time_budget === '5_min' ? 'active' : ''}" onclick="saveEngage('time_budget', '5_min', this)">5 min</button>
+              <button class="pref-btn ${engage.time_budget === '30_min' ? 'active' : ''}" onclick="saveEngage('time_budget', '30_min', this)">30 min</button>
+              <button class="pref-btn ${engage.time_budget === '1_hour' ? 'active' : ''}" onclick="saveEngage('time_budget', '1_hour', this)">1 hour</button>
+            </div>
+          </div>
+          <div class="pref-section">
+            <h4>USE REAL NAME?</h4>
+            <div class="pref-buttons">
+              <button class="pref-btn ${engage.real_name === 'yes' ? 'active' : ''}" onclick="saveEngage('real_name', 'yes', this)">Yes</button>
+              <button class="pref-btn ${engage.real_name === 'officials_only' ? 'active' : ''}" onclick="saveEngage('real_name', 'officials_only', this)">Officials only</button>
+              <button class="pref-btn ${engage.real_name === 'no' ? 'active' : ''}" onclick="saveEngage('real_name', 'no', this)">No</button>
+            </div>
+          </div>
+          <div class="pref-section">
+            <h4>SHOW UP IN PERSON?</h4>
+            <div class="pref-buttons">
+              <button class="pref-btn ${engage.in_person === 'yes' ? 'active' : ''}" onclick="saveEngage('in_person', 'yes', this)">Yes</button>
+              <button class="pref-btn ${engage.in_person === 'maybe' ? 'active' : ''}" onclick="saveEngage('in_person', 'maybe', this)">Maybe</button>
+              <button class="pref-btn ${engage.in_person === 'no' ? 'active' : ''}" onclick="saveEngage('in_person', 'no', this)">No</button>
+            </div>
+          </div>
+          <div class="pref-section">
+            <h4>SPEAK AT HEARINGS?</h4>
+            <div class="pref-buttons">
+              <button class="pref-btn ${engage.speak === 'yes' ? 'active' : ''}" onclick="saveEngage('speak', 'yes', this)">Yes</button>
+              <button class="pref-btn ${engage.speak === 'written_only' ? 'active' : ''}" onclick="saveEngage('speak', 'written_only', this)">Written only</button>
+              <button class="pref-btn ${engage.speak === 'no' ? 'active' : ''}" onclick="saveEngage('speak', 'no', this)">No</button>
+            </div>
+          </div>
+          <div class="pref-section">
+            <h4>DONATE?</h4>
+            <div class="pref-buttons">
+              <button class="pref-btn ${engage.financial === 'yes' ? 'active' : ''}" onclick="saveEngage('financial', 'yes', this)">Yes</button>
+              <button class="pref-btn ${engage.financial === 'small' ? 'active' : ''}" onclick="saveEngage('financial', 'small', this)">Small amounts</button>
+              <button class="pref-btn ${engage.financial === 'no' ? 'active' : ''}" onclick="saveEngage('financial', 'no', this)">No</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function flashSaved(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 1500);
+    }
+
+    async function saveDistrict(val) {
+      userData.district = val || null;
+      document.getElementById('user-district').textContent = val || '??';
+      await sb.from('users').update({ district: val || null }).eq('id', uid);
+      flashSaved('district-saved');
+    }
+
+    async function savePref(key, val, btn) {
+      userData.preferences[key] = val;
+      const group = btn.parentElement;
+      group.querySelectorAll('.pref-btn').forEach(b => { b.classList.remove('active', 'active-disagree'); });
+      btn.classList.add(val === 'disagree' ? 'active-disagree' : 'active');
+      await sb.from('users').update({ preferences: userData.preferences }).eq('id', uid);
+      flashSaved('positions-saved');
+    }
+
+    let ftTimer = null;
+    function debounceFreetext() {
+      clearTimeout(ftTimer);
+      ftTimer = setTimeout(saveFreetext, 1000);
+    }
+
+    async function saveFreetext() {
+      const freetext = {
+        priorities: document.getElementById('ft-priorities')?.value?.trim() || '',
+        tracking: document.getElementById('ft-tracking')?.value?.trim() || '',
+        context: document.getElementById('ft-context')?.value?.trim() || '',
+      };
+      userData.preferences.freetext = freetext;
+      await sb.from('users').update({ preferences: userData.preferences }).eq('id', uid);
+      flashSaved('freetext-saved');
+    }
+
+    async function saveEngage(key, val, btn) {
+      userData.engagement_prefs[key] = val;
+      const group = btn.parentElement;
+      group.querySelectorAll('.pref-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      await sb.from('users').update({ engagement_prefs: userData.engagement_prefs }).eq('id', uid);
+      flashSaved('engage-saved');
+    }
+
+    // ─── ACTION TRACKING ───
+    let currentDigestId = null;
+    let currentRecs = [];
+
+    async function trackAction(ri, status) {
+      const r = currentRecs[ri];
+      if (!r) return;
+      try {
+        await sb.from('actions').insert({
+          user_id: uid,
+          digest_id: currentDigestId,
+          action_type: r.action_type || 'email',
+          action_description: r.action || '',
+          channel: r.channel || '',
+          completed: status === 'confirmed' ? true : null,
+        });
+      } catch (e) { console.error('Action tracking failed:', e); }
+    }
+
+    async function confirmAction(ri, btn) {
+      const r = currentRecs[ri];
+      if (!r) return;
+      btn.textContent = '✓ Logged — nice work';
+      btn.classList.add('active');
+      btn.disabled = true;
+      try {
+        await sb.from('actions').insert({
+          user_id: uid,
+          digest_id: currentDigestId,
+          action_type: r.action_type || 'email',
+          action_description: r.action || '',
+          channel: r.channel || '',
+          completed: true,
+        });
+      } catch (e) { console.error('Action confirm failed:', e); }
+    }
+
+    // ─── HELPERS ───
+    function buildMailto(channel, draftText) {
+      if (!channel || !draftText || !channel.includes('@')) return '#';
+      let subject = '', body = draftText;
+      for (const line of draftText.split('\n')) {
+        if (line.trim().toLowerCase().startsWith('subject:')) {
+          subject = line.split(':').slice(1).join(':').trim();
+          body = draftText.replace(line, '').trim();
+          break;
+        }
+      }
+      const params = subject
+        ? `subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+        : `body=${encodeURIComponent(body)}`;
+      return `mailto:${channel}?${params}`;
+    }
+
+    function esc(s) {
+      if (!s) return '';
+      const d = document.createElement('div');
+      d.textContent = String(s);
+      return d.innerHTML;
+    }
+
+    // ─── AUTH ───
+    function renderLogin() {
+      document.querySelector('.app').innerHTML = `
+        <div class="card" style="margin-top: 80px; max-width: 420px; margin-left: auto; margin-right: auto; text-align: center;">
+          <h3>SIGN IN</h3>
+          <p style="margin-bottom: 16px;">Enter your email and we'll send you a sign-in link. No password needed.</p>
+          <input type="email" id="login-email" placeholder="you@example.com"
+            style="width: 100%; padding: 10px 12px; background: rgba(0,0,0,0.25); border: 1px solid rgba(139,105,20,0.4); border-radius: 4px; color: #e0dcd0; font-size: 14px; margin-bottom: 12px;">
+          <button class="action-btn" style="width: 100%; padding: 10px;" onclick="sendLoginLink()">SEND SIGN-IN LINK</button>
+          <p id="login-status" style="margin-top: 12px; font-size: 13px; color: #80c090;"></p>
+          <p style="margin-top: 16px; font-size: 12px; color: #706c60;">New here? <a href="signup.html">Sign up</a> instead.</p>
+        </div>`;
+    }
+
+    async function sendLoginLink() {
+      const email = document.getElementById('login-email').value.trim();
+      const status = document.getElementById('login-status');
+      if (!email || !email.includes('@')) { status.textContent = 'Enter a valid email.'; status.style.color = '#e08080'; return; }
+      const { error } = await sb.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.origin + window.location.pathname },
+      });
+      if (error) { status.textContent = 'Error: ' + error.message; status.style.color = '#e08080'; }
+      else { status.textContent = 'Check your email for the sign-in link.'; status.style.color = '#80c090'; }
+    }
+
+    async function signOut() {
+      await sb.auth.signOut();
+      window.location.reload();
+    }
+
+    async function resolveUser() {
+      // Primary: Supabase Auth session
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        const email = session.user.email;
+        let { data: row } = await sb.from('users').select('*').eq('email', email).maybeSingle();
+        if (!row) {
+          // First login — claim the row, applying district stashed at signup
+          const district = localStorage.getItem('ubl_pending_district') || null;
+          const { data: created, error } = await sb.from('users').insert({
+            email,
+            district,
+            voter_registered: true,
+            preferences: {},
+            engagement_prefs: { time_budget: '30_min', real_name: 'officials_only', in_person: 'maybe', speak: 'written_only', financial: 'no' },
+          }).select().single();
+          if (error) { console.error('User row creation failed:', error); return false; }
+          row = created;
+          localStorage.removeItem('ubl_pending_district');
+        }
+        userData = row;
+        uid = row.id;
+        // Add sign-out to header
+        const info = document.querySelector('.user-info');
+        if (info && !document.getElementById('signout-btn')) {
+          info.insertAdjacentHTML('beforeend',
+            ' <button id="signout-btn" class="pref-btn" style="margin-left: 10px; font-size: 10px;" onclick="signOut()">Sign out</button>');
+        }
+        return true;
+      }
+      // Legacy/dev fallback: ?uid= param (works until RLS migration runs)
+      if (uid) return true;
+      return false;
+    }
+
+    // ─── INIT ───
+    async function init() {
+      const ok = await resolveUser();
+      if (!ok) { renderLogin(); return; }
+      await loadUser();
+      loadThisWeek();
+      loadHistory();
+      loadPrefs();
+    }
+
+    init();
+  </script>
+</body>
+</html>

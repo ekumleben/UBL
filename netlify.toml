@@ -1,0 +1,16 @@
+# UBL app pages (signup, survey, console, unsubscribe, privacy).
+# Publishes ONLY site/ — never the repo root, which contains .env and code.
+#
+# Deploy: connect this repo in Netlify, or `netlify deploy --prod` from ~/ubl.
+# Suggested subdomain: app.universalbasiclobbyist.ai (set in Netlify domain settings),
+# with the landing page staying on the apex domain.
+
+[build]
+  publish = "site"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

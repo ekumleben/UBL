@@ -18,7 +18,7 @@ PROMPTS_DIR = Path(__file__).resolve().parent / "prompts"
 
 # Model IDs
 HAIKU_MODEL = "claude-haiku-4-5-20251001"
-SONNET_MODEL = "claude-sonnet-4-5-20250514"
+SONNET_MODEL = "claude-sonnet-4-5-20250929"
 
 
 # RSS feed registry — all confirmed-working feeds from CLAUDE.md Section 1.
@@ -26,18 +26,17 @@ SONNET_MODEL = "claude-sonnet-4-5-20250514"
 # provides article body text (vs. just a summary).
 DEFAULT_FEEDS: list[FeedSource] = [
     # Critical — full text, free
-    FeedSource(name="mission_local", url="https://missionlocal.org/feed", priority="critical", full_text=True),
+    FeedSource(name="mission_local", url="https://missionlocal.org/feed/", priority="critical", full_text=True),
     FeedSource(name="48_hills", url="https://48hills.org/feed", priority="critical", full_text=True),
     FeedSource(name="streetsblog_sf", url="https://sf.streetsblog.org/feed", priority="critical", full_text=True),
-    # High priority — free
-    FeedSource(name="sfgate_bayarea", url="https://sfgate.com/bayarea/feed/bay-area-news-702.php", priority="high", full_text=False),
-    # High priority — summaries only (paywalled full text)
+    # High priority — summaries only
     FeedSource(name="sf_standard", url="https://sfstandard.com/feed", priority="high", full_text=False),
-    FeedSource(name="sf_standard_news", url="https://sfstandard.com/news/feed", priority="high", full_text=False),
-    FeedSource(name="sf_standard_politics", url="https://sfstandard.com/politics/feed", priority="high", full_text=False),
+    FeedSource(name="sf_standard_politics", url="https://sfstandard.com/category/politics/feed", priority="high", full_text=False),
     # Medium priority
     FeedSource(name="sfist", url="https://sfist.com/rss", priority="medium", full_text=False),
     FeedSource(name="growsf", url="https://report.growsf.org/feed", priority="medium", full_text=True),
+    FeedSource(name="the_frisc", url="https://thefrisc.com/feed/", priority="medium", full_text=True),
+    FeedSource(name="sf_public_press", url="https://sfpublicpress.org/feed", priority="medium", full_text=True),
 ]
 
 
@@ -48,6 +47,8 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     supabase_url: str = ""
     supabase_key: str = ""
+    # service_role key — bypasses RLS; used by the pipeline only, never the browser
+    supabase_service_key: str = ""
     resend_api_key: str = ""
 
     # Founder config (Phase 0)
@@ -57,6 +58,9 @@ class Settings(BaseSettings):
     # Pipeline settings
     dry_run: bool = True
     log_level: str = "INFO"
+
+    # Public site base URL (for unsubscribe/console links in emails)
+    site_url: str = "https://app.universalbasiclobbyist.ai"
 
     # RSS feeds
     feeds: list[FeedSource] = Field(default_factory=lambda: DEFAULT_FEEDS)

@@ -6,8 +6,8 @@ In dry-run mode, writes the rendered email to a local file for inspection.
 from __future__ import annotations
 
 import logging
-from datetime import date
 from pathlib import Path
+from urllib.parse import quote
 
 import resend
 from jinja2 import Environment, FileSystemLoader
@@ -22,12 +22,29 @@ TEMPLATES_DIR = Path(__file__).parent / "templates"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent.parent / "output"
 
 
+def _build_mailto(channel: str, draft_text: str) -> str:
+    """Build a mailto: URI from a channel email and draft text."""
+    if not channel or not draft_text or "@" not in channel:
+        return ""
+    subject = ""
+    body = draft_text
+    for line in draft_text.split("\n"):
+        if line.strip().lower().startswith("subject:"):
+            subject = line.split(":", 1)[1].strip()
+            body = draft_text.replace(line, "", 1).strip()
+            break
+    params = f"subject={quote(subject)}&body={quote(body)}" if subject else f"body={quote(body)}"
+    return f"mailto:{channel}?{params}"
+
+
 def _get_template_env() -> Environment:
     """Create a Jinja2 environment for email templates."""
-    return Environment(
+    env = Environment(
         loader=FileSystemLoader(str(TEMPLATES_DIR)),
         autoescape=True,
     )
+    env.filters["mailto"] = lambda rec: _build_mailto(rec.channel, rec.draft_text or "")
+    return env
 
 
 def render_digest_email(digest: Digest) -> tuple[str, str]:
@@ -41,6 +58,7 @@ def render_digest_email(digest: Digest) -> tuple[str, str]:
     """
     env = _get_template_env()
     template = env.get_template("digest.html")
+    settings = get_settings()
 
     html = template.render(
         week_of=digest.week_of.strftime("%B %d, %Y"),
@@ -49,6 +67,8 @@ def render_digest_email(digest: Digest) -> tuple[str, str]:
         is_quiet_week=digest.leverage.is_quiet_week,
         reasoning_summary=digest.leverage.reasoning_summary,
         further_reading=digest.further_reading,
+        site_url=settings.site_url.rstrip("/"),
+        user_id=digest.user_id,
     )
 
     subject = f"Your UBL Weekly — {digest.week_of.strftime('%B %d')}"

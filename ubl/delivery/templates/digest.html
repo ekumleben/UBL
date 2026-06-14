@@ -19,70 +19,119 @@
             </td>
           </tr>
 
-          <!-- Digest Items -->
-          {% if items %}
+          <!-- Reasoning Summary -->
+          {% if reasoning_summary %}
           <tr>
-            <td style="padding: 32px 32px 8px;">
-              <h2 style="margin: 0 0 16px; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; color: #666;">What Happened This Week</h2>
+            <td style="padding: 24px 32px 8px;">
+              <p style="margin: 0; font-size: 14px; color: #444; font-style: italic;">{{ reasoning_summary }}</p>
             </td>
           </tr>
-          {% for item in items %}
-          <tr>
-            <td style="padding: 0 32px 24px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="border-left: 3px solid #2563eb; padding-left: 16px;">
-                    <h3 style="margin: 0 0 4px; font-size: 16px;">
-                      <a href="{{ item.source_url }}" style="color: #1a1a1a; text-decoration: none;">{{ item.headline }}</a>
-                    </h3>
-                    <p style="margin: 0 0 8px; font-size: 14px; color: #444;">{{ item.summary }}</p>
-                    <p style="margin: 0; font-size: 14px; color: #2563eb; font-style: italic;">{{ item.why_it_matters }}</p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          {% endfor %}
           {% endif %}
 
-          <!-- Recommended Actions -->
+          <!-- Open Windows (Recommendations) — FIRST, not last -->
           {% if recommendations %}
           <tr>
-            <td style="padding: 8px 32px;">
-              <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 0;">
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 16px 32px 8px;">
-              <h2 style="margin: 0 0 16px; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; color: #666;">Recommended Actions</h2>
+            <td style="padding: 24px 32px 8px;">
+              <h2 style="margin: 0 0 4px; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; color: #1a1a1a;">Open Windows</h2>
+              <p style="margin: 0 0 16px; font-size: 13px; color: #888;">Where your input can still change an outcome</p>
             </td>
           </tr>
           {% for rec in recommendations %}
           <tr>
-            <td style="padding: 0 32px 24px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f7ff; border-radius: 6px;">
+            <td style="padding: 0 32px 20px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f7ff; border-radius: 6px; border-left: 4px solid #2563eb;">
                 <tr>
-                  <td style="padding: 16px;">
+                  <td style="padding: 16px 16px 12px;">
+                    <!-- Action headline -->
                     <p style="margin: 0 0 8px; font-size: 15px; font-weight: 600; color: #1a1a1a;">{{ rec.action }}</p>
-                    <p style="margin: 0 0 8px; font-size: 14px; color: #444;">{{ rec.rationale }}</p>
+
+                    <!-- Metadata row -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 10px;">
+                      <tr>
+                        {% if rec.deadline %}
+                        <td style="font-size: 12px; padding: 3px 8px; background-color: #fef2f2; color: #b91c1c; border-radius: 3px; display: inline-block; font-weight: 600;">
+                          ⏰ {{ rec.deadline }}
+                        </td>
+                        {% endif %}
+                        <td style="font-size: 12px; padding: 3px 8px; background-color: #f0fdf4; color: #166534; border-radius: 3px; display: inline-block;">
+                          {{ rec.effort_estimate }}
+                        </td>
+                        {% if rec.legal_weight and rec.legal_weight != 'none' %}
+                        <td style="font-size: 12px; padding: 3px 8px; background-color: #fffbeb; color: #92400e; border-radius: 3px; display: inline-block;">
+                          {% if rec.legal_weight == 'legally_binding' %}⚖️ Legally binding
+                          {% elif rec.legal_weight == 'preserves_standing' %}⚖️ Preserves legal standing
+                          {% elif rec.legal_weight == 'procedural_record' %}📋 Official record
+                          {% endif %}
+                        </td>
+                        {% endif %}
+                      </tr>
+                    </table>
+
+                    <!-- Rationale -->
+                    <p style="margin: 0 0 10px; font-size: 14px; color: #444;">{{ rec.rationale }}</p>
+
+                    <!-- Scope advice -->
+                    {% if rec.scope_advice %}
+                    <p style="margin: 0 0 10px; font-size: 13px; color: #6b21a8; background-color: #faf5ff; padding: 6px 10px; border-radius: 4px;">
+                      <strong>Strategy:</strong> {{ rec.scope_advice }}
+                    </p>
+                    {% endif %}
+
+                    <!-- Channel info -->
+                    {% if rec.channel %}
                     <p style="margin: 0 0 4px; font-size: 13px; color: #666;">
-                      <strong>Effort:</strong> {{ rec.effort_estimate }}
-                    </p>
-                    {% if rec.contact_info %}
-                    <p style="margin: 4px 0; font-size: 13px; color: #666;">
-                      <strong>Contact:</strong> {{ rec.contact_info }}
+                      <strong>Send to:</strong> {{ rec.channel }}
                     </p>
                     {% endif %}
-                    {% if rec.alternatives %}
-                    <p style="margin: 4px 0 0; font-size: 13px; color: #888;">
-                      <strong>Alternatives:</strong> {{ rec.alternatives | join('; ') }}
+                    {% if rec.recipient %}
+                    <p style="margin: 0 0 4px; font-size: 13px; color: #666;">
+                      <strong>Read by:</strong> {{ rec.recipient }}
                     </p>
                     {% endif %}
-                    {% if rec.draft_text %}
-                    <details style="margin-top: 12px;">
-                      <summary style="font-size: 13px; color: #2563eb; cursor: pointer;">View draft text</summary>
-                      <div style="margin-top: 8px; padding: 12px; background-color: #ffffff; border-radius: 4px; font-size: 13px; white-space: pre-wrap;">{{ rec.draft_text }}</div>
+
+                    <!-- Action buttons -->
+                    {% if rec.action_type == 'vote' %}
+                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top: 12px;">
+                      <tr>
+                        <td style="background-color: #2563eb; border-radius: 4px;">
+                          <a href="https://sfelections.sfgov.org/find-your-poll" style="display: inline-block; padding: 10px 20px; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600;">Find your polling place →</a>
+                        </td>
+                      </tr>
+                    </table>
+                    {% elif rec.draft_text %}
+                    <!-- Primary: Do the thing -->
+                    {% set mailto_url = rec | mailto %}
+                    {% if mailto_url %}
+                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top: 12px;">
+                      <tr>
+                        <td style="background-color: #2563eb; border-radius: 4px;">
+                          <a href="{{ mailto_url }}" style="display: inline-block; padding: 10px 20px; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600;">
+                            {% if rec.action_type == 'public_comment' or rec.action_type == 'ceqa_comment' %}Submit comment →
+                            {% elif rec.action_type == 'email' %}Send this email →
+                            {% else %}Send this →
+                            {% endif %}
+                          </a>
+                        </td>
+                        <td style="padding-left: 8px;">
+                          <span style="font-size: 12px; color: #888;">Opens in your email app — review before sending</span>
+                        </td>
+                      </tr>
+                    </table>
+                    {% endif %}
+                    <!-- Secondary: View/edit the draft -->
+                    <details style="margin-top: 8px; border: 1px solid #e5e7eb; border-radius: 4px; overflow: hidden;">
+                      <summary style="padding: 8px 16px; font-size: 13px; color: #6b7280; cursor: pointer; background-color: #f8fafc;">
+                        View & edit draft text
+                      </summary>
+                      <div style="padding: 12px 16px; background-color: #ffffff; font-size: 13px; white-space: pre-wrap; border-top: 1px solid #e5e7eb;">{{ rec.draft_text }}</div>
                     </details>
+                    {% endif %}
+
+                    <!-- Alternatives -->
+                    {% if rec.alternatives %}
+                    <p style="margin: 12px 0 0; font-size: 12px; color: #888;">
+                      <strong>Other options:</strong> {{ rec.alternatives | join(' · ') }}
+                    </p>
                     {% endif %}
                   </td>
                 </tr>
@@ -92,15 +141,54 @@
           {% endfor %}
           {% elif is_quiet_week %}
           <tr>
+            <td style="padding: 24px 32px;">
+              <h2 style="margin: 0 0 8px; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; color: #1a1a1a;">This Week</h2>
+              <p style="margin: 0; font-size: 14px; color: #666; font-style: italic;">{{ reasoning_summary }}</p>
+            </td>
+          </tr>
+          {% endif %}
+
+          <!-- Context (Digest Items) — supporting evidence, not the main event -->
+          {% if items %}
+          <tr>
             <td style="padding: 8px 32px;">
               <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 0;">
             </td>
           </tr>
           <tr>
-            <td style="padding: 16px 32px 24px;">
-              <p style="margin: 0; font-size: 14px; color: #666; font-style: italic;">{{ reasoning_summary }}</p>
+            <td style="padding: 16px 32px 8px;">
+              <h2 style="margin: 0 0 4px; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; color: #666;">What's Moving</h2>
+              <p style="margin: 0 0 16px; font-size: 13px; color: #888;">Context behind this week's open windows</p>
             </td>
           </tr>
+          {% for item in items %}
+          <tr>
+            <td style="padding: 0 32px 20px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="border-left: 3px solid {% if item.has_action_window %}#2563eb{% else %}#d1d5db{% endif %}; padding-left: 16px;">
+                    <h3 style="margin: 0 0 4px; font-size: 15px;">
+                      <a href="{{ item.source_url }}" style="color: #1a1a1a; text-decoration: none;">{{ item.headline }}</a>
+                    </h3>
+                    {% if item.decision_stage and item.decision_stage != 'none' %}
+                    <span style="display: inline-block; font-size: 11px; padding: 2px 6px; background-color: #f3f4f6; color: #6b7280; border-radius: 3px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
+                      {% if item.decision_stage == 'committee' %}📋 In Committee
+                      {% elif item.decision_stage == 'full_board' %}🏛 Full Board
+                      {% elif item.decision_stage == 'commission' %}📊 Commission
+                      {% elif item.decision_stage == 'agency' %}🏢 Agency Decision
+                      {% elif item.decision_stage == 'ballot' %}🗳 On the Ballot
+                      {% elif item.decision_stage == 'implementation' %}⚙️ Implementation
+                      {% endif %}
+                    </span>
+                    {% endif %}
+                    <p style="margin: 0 0 6px; font-size: 14px; color: #444;">{{ item.summary }}</p>
+                    <p style="margin: 0; font-size: 13px; color: #2563eb; font-style: italic;">{{ item.why_it_matters }}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endfor %}
           {% endif %}
 
           <!-- Further Reading -->
@@ -112,7 +200,7 @@
           </tr>
           <tr>
             <td style="padding: 16px 32px 24px;">
-              <h2 style="margin: 0 0 12px; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; color: #666;">Further Reading</h2>
+              <h2 style="margin: 0 0 12px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #888;">Further Reading</h2>
               {% for link in further_reading %}
               <p style="margin: 0 0 8px; font-size: 14px;">
                 <a href="{{ link.url }}" style="color: #2563eb; text-decoration: none;">{{ link.title }}</a>
@@ -127,10 +215,10 @@
           <tr>
             <td style="background-color: #f9f9f9; padding: 24px 32px; border-top: 1px solid #e5e5e5;">
               <p style="margin: 0 0 8px; font-size: 13px; color: #888; text-align: center;">
-                Was this useful? <a href="#" style="color: #2563eb;">Yes</a> · <a href="#" style="color: #2563eb;">No</a> · <a href="#" style="color: #2563eb;">I have thoughts</a>
+                <a href="{{ site_url }}/console.html" style="color: #2563eb;">Open your console</a> — see history, track actions, update preferences
               </p>
               <p style="margin: 0; font-size: 12px; color: #aaa; text-align: center;">
-                <a href="#" style="color: #aaa;">Manage preferences</a> · <a href="#" style="color: #aaa;">Unsubscribe</a>
+                <a href="{{ site_url }}/console.html" style="color: #aaa;">Manage preferences</a> · <a href="{{ site_url }}/unsubscribe.html?uid={{ user_id }}" style="color: #aaa;">Unsubscribe</a> · <a href="{{ site_url }}/privacy.html" style="color: #aaa;">Privacy</a>
               </p>
               <p style="margin: 8px 0 0; font-size: 11px; color: #ccc; text-align: center;">
                 Universal Basic Lobbyist · universalbasiclobbyist.ai

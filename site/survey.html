@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UBL — Personalize Your Briefing</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      overflow-x: hidden;
+      background: #1a1a2e;
+      font-family: 'DM Sans', sans-serif;
+      color: #e0dcd0;
+    }
+
+    canvas#scene {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      z-index: 0;
+    }
+
+    .canvas-fade {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100vw;
+      height: 30vh;
+      background: linear-gradient(to bottom, transparent, #1a1a2e 90%);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .speech-bubbles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .speech {
+      position: absolute;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 5px;
+      color: #2a2a3e;
+      background: rgba(240, 235, 210, 0.85);
+      padding: 3px 5px;
+      border-radius: 2px;
+      opacity: 0;
+      animation: speechFloat 12s ease-in-out infinite;
+      white-space: nowrap;
+    }
+
+    .speech::after {
+      content: '';
+      position: absolute;
+      bottom: -3px;
+      left: 8px;
+      width: 4px;
+      height: 3px;
+      background: rgba(240, 235, 210, 0.85);
+      clip-path: polygon(0 0, 100% 0, 50% 100%);
+    }
+
+    @keyframes speechFloat {
+      0%, 15% { opacity: 0; transform: translateY(4px); }
+      20%, 40% { opacity: 1; transform: translateY(0); }
+      45%, 100% { opacity: 0; transform: translateY(-4px); }
+    }
+
+    /* ── Page layout ── */
+    .container {
+      position: relative;
+      z-index: 10;
+      max-width: 580px;
+      margin: 0 auto;
+      padding: 55vh 20px 80px;
+    }
+
+    @keyframes heroIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Construction billboard card ── */
+    .card {
+      position: relative;
+      background: #e8dcc4;
+      border: 4px solid #8b6914;
+      padding: 0;
+      box-shadow: 4px 6px 0 rgba(0,0,0,0.4);
+      image-rendering: pixelated;
+      margin-bottom: 20px;
+      animation: heroIn 1.2s ease-out;
+    }
+
+    .card::before { display: none; }
+    .card::after { display: none; }
+    .post-left, .post-right, .nail { display: none; }
+
+    .card-inner {
+      padding: 2rem 1.5rem 1.5rem;
+    }
+
+    .post-left, .post-right {
+      position: absolute;
+      top: -8px;
+      width: 10px;
+      height: calc(100% + 48px);
+      background: linear-gradient(90deg, #6a4a1a, #8b6914, #7a5a1a);
+      border: 1px solid #5a3a0a;
+      z-index: -1;
+    }
+
+    .post-left { left: 16px; }
+    .post-right { right: 16px; }
+
+    .nail {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      background: #a0a0a0;
+      border-radius: 50%;
+      border: 1px solid #707070;
+      z-index: 2;
+    }
+
+    .nail-tl { top: 14px; left: 6px; }
+    .nail-tr { top: 14px; right: 6px; }
+    .nail-bl { bottom: 14px; left: 6px; }
+    .nail-br { bottom: 14px; right: 6px; }
+
+    /* ── Typography ── */
+    h1 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(0.55rem, 1.8vw, 0.8rem);
+      color: #2a2218;
+      line-height: 1.6;
+      margin-bottom: 0.3rem;
+      text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(0.5rem, 1.5vw, 0.7rem);
+      color: #2a2218;
+      line-height: 1.6;
+      margin-bottom: 0.3rem;
+      text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
+    }
+
+    .subtitle {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      color: #5a4a30;
+      line-height: 1.6;
+      margin-bottom: 1.2rem;
+    }
+
+    .saved {
+      display: inline-block;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.4rem;
+      color: #4a7c59;
+      opacity: 0;
+      transition: opacity 0.3s;
+      margin-left: 8px;
+      letter-spacing: 1px;
+    }
+
+    .saved.show { opacity: 1; }
+
+    /* ── Free text ── */
+    .text-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.45rem;
+      color: #2a2218;
+      margin-bottom: 6px;
+      margin-top: 16px;
+      display: block;
+      letter-spacing: 0.5px;
+      line-height: 1.8;
+    }
+
+    .text-hint {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      color: #7a6a4a;
+      margin-bottom: 6px;
+    }
+
+    textarea {
+      width: 100%;
+      padding: 12px 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      background: rgba(255,255,255,0.6);
+      border: 2px solid #8b6914;
+      color: #2a2218;
+      outline: none;
+      resize: vertical;
+      min-height: 120px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    textarea::placeholder {
+      color: #9a8a6a;
+    }
+
+    textarea:focus {
+      border-color: #a07a18;
+      background: rgba(255,255,255,0.8);
+      box-shadow: 0 0 0 3px rgba(139,105,20,0.15);
+    }
+
+    #ft-saved {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.4rem;
+      color: #4a7c59;
+      margin-top: 12px;
+      letter-spacing: 1px;
+    }
+
+    /* ── Core questions ── */
+    .question {
+      background: rgba(255,255,255,0.35);
+      border: 1px solid #c8b898;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+
+    .question p {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: #2a2218;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+
+    .options {
+      display: flex;
+      gap: 8px;
+    }
+
+    .options button {
+      flex: 1;
+      padding: 10px 6px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(0.28rem, 1.8vw, 0.4rem);
+      border: 2px solid #8b6914;
+      background: rgba(255,255,255,0.5);
+      color: #2a2218;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .options button:hover {
+      background: rgba(255,255,255,0.8);
+      border-color: #a07a18;
+    }
+
+    .options button.selected {
+      background: #4a7c59;
+      color: #e8dcc4;
+      border-color: #3a5c40;
+    }
+
+    .options button.selected-disagree {
+      background: #9a4a4a;
+      color: #e8dcc4;
+      border-color: #7a3a3a;
+    }
+
+    /* ── Engagement ── */
+    label {
+      display: block;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.45rem;
+      color: #2a2218;
+      margin-bottom: 6px;
+      margin-top: 16px;
+      letter-spacing: 0.5px;
+      line-height: 1.8;
+    }
+
+    .engagement {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .engagement button {
+      padding: 10px 10px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(0.25rem, 1.6vw, 0.38rem);
+      border: 2px solid #8b6914;
+      background: rgba(255,255,255,0.5);
+      color: #2a2218;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .engagement button:hover {
+      background: rgba(255,255,255,0.8);
+    }
+
+    .engagement button.selected {
+      background: #4a7c59;
+      color: #e8dcc4;
+      border-color: #3a5c40;
+    }
+
+    /* ── Infinite mode ── */
+    #infinite-card { transition: opacity 0.3s; }
+
+    .infinite-question {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      color: #2a2218;
+      margin-bottom: 16px;
+      min-height: 48px;
+      line-height: 1.6;
+    }
+
+    .infinite-options {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .infinite-options button {
+      flex: 1;
+      padding: 14px 6px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(0.3rem, 2vw, 0.45rem);
+      border: 2px solid #8b6914;
+      background: rgba(255,255,255,0.5);
+      color: #2a2218;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.3px;
+    }
+
+    .infinite-options button:hover {
+      background: rgba(255,255,255,0.8);
+      border-color: #a07a18;
+    }
+
+    .infinite-options button:active {
+      background: #4a7c59;
+      color: #e8dcc4;
+      border-color: #3a5c40;
+    }
+
+    .counter {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.4rem;
+      color: #7a6a4a;
+      text-align: center;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .done-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.45rem;
+      background: none;
+      border: 2px solid #8b6914;
+      color: #5a4a30;
+      cursor: pointer;
+      text-align: center;
+      letter-spacing: 0.5px;
+      transition: all 0.2s;
+    }
+
+    .done-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .progress-dots {
+      display: flex;
+      gap: 3px;
+      justify-content: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .progress-dots .dot {
+      width: 6px;
+      height: 6px;
+      background: #c8b898;
+      transition: background 0.3s;
+    }
+
+    .progress-dots .dot.filled {
+      background: #8b6914;
+    }
+
+    .progress-dots .dot.current {
+      background: #f0c020;
+      box-shadow: 0 0 0 2px rgba(240,192,32,0.3);
+    }
+
+    /* ── No uid ── */
+    .no-uid {
+      text-align: center;
+      padding: 30px 20px;
+    }
+
+    .no-uid h2 {
+      margin-bottom: 12px;
+    }
+
+    .no-uid p {
+      font-family: 'DM Sans', sans-serif;
+      color: #5a4a30;
+    }
+
+    .no-uid a {
+      color: #5a4a30;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* ── Final ── */
+    .final {
+      display: none;
+      text-align: center;
+      padding: 30px 20px;
+    }
+
+    .final h2 {
+      margin-bottom: 12px;
+    }
+
+    .final p {
+      font-family: 'DM Sans', sans-serif;
+      color: #5a4a30;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 600px) {
+      .container { padding: 12px; padding-top: 20px; }
+      .card { padding: 0; margin-bottom: 12px; }
+      .card-inner { padding: 1.2rem 0.8rem 1rem; }
+      h1 { font-size: 0.55rem; line-height: 1.8; }
+      h2 { font-size: 0.45rem; }
+      .subtitle { font-size: 12px; }
+      .question { padding: 10px 12px; margin-bottom: 8px; }
+      .question p { font-size: 13px; }
+      .options { gap: 4px; }
+      .options button { padding: 12px 6px; font-size: 0.42rem; }
+      .engagement { gap: 4px; flex-wrap: wrap; }
+      .engagement button { padding: 12px 10px; font-size: 0.38rem; }
+      label { font-size: 0.3rem; margin-top: 14px; }
+      .text-label { font-size: 13px; }
+      textarea { font-size: 14px; min-height: 100px; }
+      .infinite-question { font-size: 14px; min-height: 40px; }
+      .infinite-options { gap: 8px; }
+      .infinite-options button { padding: 14px 6px; font-size: 0.42rem; }
+      .counter { font-size: 0.3rem; }
+      .done-btn { font-size: 13px; }
+      .progress-dots { gap: 3px; }
+      .progress-dots .dot { width: 6px; height: 6px; }
+      canvas#scene { display: none; }
+      body { background: #1a1a2e; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+  <div class="canvas-fade"></div>
+  <div id="speechBubbles" class="speech-bubbles"></div>
+
+  <div class="container">
+
+    <div id="no-uid-view" class="card" style="display: none;">
+      <div class="nail nail-tl"></div><div class="nail nail-tr"></div>
+      <div class="nail nail-bl"></div><div class="nail nail-br"></div>
+      <div class="post-left"></div><div class="post-right"></div>
+      <div class="card-inner no-uid">
+        <h2>NO USER FOUND</h2>
+        <p>Please <a href="signup.html">sign up first</a>, then come back to personalize.</p>
+      </div>
+    </div>
+
+    <!-- SECTION 1: Free text -->
+    <div class="card" id="freetext-card">
+      <div class="nail nail-tl"></div><div class="nail nail-tr"></div>
+      <div class="nail nail-bl"></div><div class="nail nail-br"></div>
+      <div class="post-left"></div><div class="post-right"></div>
+      <div class="card-inner">
+        <h1>TELL US WHAT MATTERS</h1>
+        <p class="subtitle">In your own words. The more specific, the better we can tailor your briefings.</p>
+
+        <span class="text-label">WHAT ISSUES MATTER MOST?</span>
+        <p class="text-hint">Housing costs, street safety, transit, schools, homelessness, your business, your neighborhood -- anything.</p>
+        <textarea id="ft-priorities" placeholder="e.g. I care about housing affordability in the Sunset, bike safety on Market Street, and keeping small businesses alive in my neighborhood..." oninput="debounceSaveFreetext()"></textarea>
+
+        <span class="text-label">ANYTHING SPECIFIC TO TRACK?</span>
+        <p class="text-hint">A particular development, a board vote, a budget item, a neighborhood issue.</p>
+        <textarea id="ft-tracking" placeholder="e.g. The proposed building at 4th and King, the Muni parcel tax measure, budget cuts to youth programs..." oninput="debounceSaveFreetext()"></textarea>
+
+        <span class="text-label">ANYTHING ELSE?</span>
+        <p class="text-hint">Your role (renter, homeowner, business owner, parent, student), how long you've lived here, your neighborhood.</p>
+        <textarea id="ft-context" placeholder="e.g. I'm a small business owner in the Mission, been here 12 years, rent my storefront..." oninput="debounceSaveFreetext()"></textarea>
+
+        <p id="ft-saved"></p>
+      </div>
+    </div>
+
+    <!-- SECTION 2: Core fault-line questions -->
+    <div class="card" id="core-card">
+      <div class="nail nail-tl"></div><div class="nail nail-tr"></div>
+      <div class="nail nail-bl"></div><div class="nail nail-br"></div>
+      <div class="post-left"></div><div class="post-right"></div>
+      <div class="card-inner">
+        <h2>QUICK POSITIONS <span class="saved" id="core-saved">SAVED</span></h2>
+        <p class="subtitle">Tap agree, disagree, or neutral. Skip any you're unsure about.</p>
+
+        <div class="question" data-key="density_my_block">
+          <p>"I'd support a 6-story apartment building on my block if it included affordable units"</p>
+          <div class="options">
+            <button onclick="pick(this, 'agree')">AGREE</button>
+            <button onclick="pick(this, 'neutral')">NEUTRAL</button>
+            <button onclick="pick(this, 'disagree')">DISAGREE</button>
+          </div>
+        </div>
+
+        <div class="question" data-key="encampment_sweeps">
+          <p>"The city should clear encampments from sidewalks even when there aren't enough shelter beds"</p>
+          <div class="options">
+            <button onclick="pick(this, 'agree')">AGREE</button>
+            <button onclick="pick(this, 'neutral')">NEUTRAL</button>
+            <button onclick="pick(this, 'disagree')">DISAGREE</button>
+          </div>
+        </div>
+
+        <div class="question" data-key="police_vs_social">
+          <p>"I'd rather have more police officers on my street than more social workers"</p>
+          <div class="options">
+            <button onclick="pick(this, 'agree')">AGREE</button>
+            <button onclick="pick(this, 'neutral')">NEUTRAL</button>
+            <button onclick="pick(this, 'disagree')">DISAGREE</button>
+          </div>
+        </div>
+
+        <div class="question" data-key="new_condos_help">
+          <p>"New market-rate condos help my neighborhood more than they hurt it"</p>
+          <div class="options">
+            <button onclick="pick(this, 'agree')">AGREE</button>
+            <button onclick="pick(this, 'neutral')">NEUTRAL</button>
+            <button onclick="pick(this, 'disagree')">DISAGREE</button>
+          </div>
+        </div>
+
+        <div class="question" data-key="worker_paycuts">
+          <p>"City workers should take pay cuts before the city cuts services"</p>
+          <div class="options">
+            <button onclick="pick(this, 'agree')">AGREE</button>
+            <button onclick="pick(this, 'neutral')">NEUTRAL</button>
+            <button onclick="pick(this, 'disagree')">DISAGREE</button>
+          </div>
+        </div>
+
+        <div class="question" data-key="state_override_housing">
+          <p>"Sacramento should be able to override SF's decisions to force more housing"</p>
+          <div class="options">
+            <button onclick="pick(this, 'agree')">AGREE</button>
+            <button onclick="pick(this, 'neutral')">NEUTRAL</button>
+            <button onclick="pick(this, 'disagree')">DISAGREE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2b: Engagement preferences -->
+    <div class="card" id="engage-card">
+      <div class="nail nail-tl"></div><div class="nail nail-tr"></div>
+      <div class="nail nail-bl"></div><div class="nail nail-br"></div>
+      <div class="post-left"></div><div class="post-right"></div>
+      <div class="card-inner">
+        <h2>HOW INVOLVED? <span class="saved" id="engage-saved">SAVED</span></h2>
+        <p class="subtitle">Helps us match actions to your comfort level.</p>
+
+        <label>TIME PER WEEK ON CIVIC STUFF</label>
+        <div class="engagement" data-key="time_budget">
+          <button onclick="epick(this, '5_min')">5 MIN</button>
+          <button onclick="epick(this, '30_min')" class="selected">30 MIN</button>
+          <button onclick="epick(this, '1_hour')">1 HOUR</button>
+        </div>
+
+        <label>USE YOUR REAL NAME IN COMMENTS/EMAILS?</label>
+        <div class="engagement" data-key="real_name">
+          <button onclick="epick(this, 'yes')">YES</button>
+          <button onclick="epick(this, 'officials_only')" class="selected">ONLY WITH OFFICIALS</button>
+          <button onclick="epick(this, 'no')">NO</button>
+        </div>
+
+        <label>SHOW UP IN PERSON AT HEARINGS?</label>
+        <div class="engagement" data-key="in_person">
+          <button onclick="epick(this, 'yes')">YES</button>
+          <button onclick="epick(this, 'maybe')" class="selected">MAYBE</button>
+          <button onclick="epick(this, 'no')">NO</button>
+        </div>
+
+        <label>WILLING TO SPEAK AT A HEARING?</label>
+        <div class="engagement" data-key="speak">
+          <button onclick="epick(this, 'yes')">YES</button>
+          <button onclick="epick(this, 'written_only')" class="selected">WRITTEN ONLY</button>
+          <button onclick="epick(this, 'no')">NO</button>
+        </div>
+
+        <label>WILLING TO DONATE?</label>
+        <div class="engagement" data-key="financial">
+          <button onclick="epick(this, 'yes')">YES</button>
+          <button onclick="epick(this, 'small')">SMALL AMOUNTS</button>
+          <button onclick="epick(this, 'no')" class="selected">NO</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: Infinite mode -->
+    <div class="card" id="infinite-card">
+      <div class="nail nail-tl"></div><div class="nail nail-tr"></div>
+      <div class="nail nail-bl"></div><div class="nail nail-br"></div>
+      <div class="post-left"></div><div class="post-right"></div>
+      <div class="card-inner">
+        <h2>GO DEEPER <span class="saved" id="inf-saved">SAVED</span></h2>
+        <p class="subtitle">More specific questions. Each answer saves instantly -- stop whenever you want.</p>
+
+        <div class="progress-dots" id="dots"></div>
+        <div class="infinite-question" id="inf-question"></div>
+        <div class="infinite-options" id="inf-options">
+          <button onclick="infPick('agree')">AGREE</button>
+          <button onclick="infPick('neutral')">NEUTRAL</button>
+          <button onclick="infPick('disagree')">DISAGREE</button>
+        </div>
+        <p class="counter" id="inf-counter"></p>
+        <button class="done-btn" id="done-btn" onclick="finish()">I'M DONE -- SAVE MY PREFERENCES</button>
+      </div>
+    </div>
+
+    <!-- Final -->
+    <div class="card final" id="final-view">
+      <div class="nail nail-tl"></div><div class="nail nail-tr"></div>
+      <div class="nail nail-bl"></div><div class="nail nail-br"></div>
+      <div class="post-left"></div><div class="post-right"></div>
+      <div class="card-inner" style="text-align: center; padding: 2.5rem 1.5rem;">
+        <h2>ALL SET.</h2>
+        <p style="font-family: 'DM Sans', sans-serif; color: #5a4a30; line-height: 1.6; margin-top: 8px;">Your next briefing will be tailored to everything you told us. The more you answered, the more specific it gets.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://fueuwdhhuvnrxiwzrqee.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1ZXV3ZGhodXZucnhpd3pycWVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNDAzMzYsImV4cCI6MjA5MTYxNjMzNn0.wmlFet8PpNgXGBPnrXHOXtzFs1HxLkcQIAHBRDitDpo';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const params = new URLSearchParams(window.location.search);
+    let uid = params.get('uid');  // legacy/dev fallback; session auth is primary
+
+    function showNoUser() {
+      document.getElementById('no-uid-view').style.display = 'block';
+      document.getElementById('freetext-card').style.display = 'none';
+      document.getElementById('core-card').style.display = 'none';
+      document.getElementById('engage-card').style.display = 'none';
+      document.getElementById('infinite-card').style.display = 'none';
+    }
+
+    async function resolveUser() {
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        const { data: row } = await sb.from('users')
+          .select('id').eq('email', session.user.email).maybeSingle();
+        if (row) { uid = row.id; return true; }
+      }
+      return !!uid;
+    }
+
+    resolveUser().then(ok => {
+      if (!ok) showNoUser();
+      else if (!infiniteStarted) { initInfinite(); infiniteStarted = true; }
+    });
+
+    // --- State ---
+    let infiniteStarted = false;
+    const preferences = {};
+    const engagement = { time_budget: '30_min', real_name: 'officials_only', in_person: 'maybe', speak: 'written_only', financial: 'no' };
+    const deepAnswers = {};
+    let freetextTimer = null;
+
+    // --- Save helpers ---
+    function flashSaved(id) {
+      const el = document.getElementById(id);
+      el.classList.add('show');
+      setTimeout(() => el.classList.remove('show'), 1500);
+    }
+
+    async function saveToDb(data) {
+      if (!uid) return;
+      try {
+        await sb.from('users').update(data).eq('id', uid);
+      } catch (e) {
+        console.error('Save failed:', e);
+      }
+    }
+
+    // --- Section 1: Free text ---
+    function debounceSaveFreetext() {
+      clearTimeout(freetextTimer);
+      freetextTimer = setTimeout(saveFreetext, 1000);
+    }
+
+    async function saveFreetext() {
+      const priorities = document.getElementById('ft-priorities').value.trim();
+      const tracking = document.getElementById('ft-tracking').value.trim();
+      const context = document.getElementById('ft-context').value.trim();
+
+      const freetext = {};
+      if (priorities) freetext.priorities = priorities;
+      if (tracking) freetext.tracking = tracking;
+      if (context) freetext.context = context;
+
+      await saveToDb({
+        preferences: { ...preferences, freetext, ...deepAnswers }
+      });
+
+      const el = document.getElementById('ft-saved');
+      el.textContent = 'AUTO-SAVED';
+      setTimeout(() => { el.textContent = ''; }, 2000);
+    }
+
+    // --- Section 2: Core questions ---
+    function pick(btn, value) {
+      const q = btn.closest('.question');
+      const key = q.dataset.key;
+      preferences[key] = value;
+      q.querySelectorAll('button').forEach(b => {
+        b.classList.remove('selected', 'selected-disagree');
+      });
+      btn.classList.add(value === 'disagree' ? 'selected-disagree' : 'selected');
+      saveToDb({ preferences: { ...preferences, ...deepAnswers } });
+      flashSaved('core-saved');
+    }
+
+    function epick(btn, value) {
+      const group = btn.closest('.engagement');
+      const key = group.dataset.key;
+      engagement[key] = value;
+      group.querySelectorAll('button').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      saveToDb({ engagement_prefs: engagement });
+      flashSaved('engage-saved');
+    }
+
+    // --- Section 3: Infinite mode ---
+    const DEEP_QUESTIONS = [
+      // --- Housing & Development ---
+      { key: "density_westside", q: "The west side of SF needs significantly more housing density" },
+      { key: "rent_control_expand", q: "Rent control should be expanded to cover newer buildings" },
+      { key: "rent_control_problem", q: "Rent control is part of why SF doesn't have enough housing" },
+      { key: "luxury_housing_helps", q: "Building luxury condos frees up older units and helps everyone" },
+      { key: "affordable_only", q: "The city should only subsidize affordable housing, not market-rate" },
+      { key: "office_conversion", q: "Empty downtown offices should be converted to housing, even with public subsidies" },
+      { key: "developer_fees_cut", q: "Cutting developer fees is worth it if it gets more housing built faster" },
+      { key: "tenant_buyout_ban", q: "Landlords should be banned from offering tenants money to leave rent-controlled units" },
+      { key: "nimby_lawsuit_block", q: "Neighbors should not be able to sue to block housing projects that meet zoning rules" },
+      { key: "adus_everywhere", q: "Every homeowner should be allowed to build a backyard apartment without neighbor approval" },
+      { key: "height_limits_raise", q: "SF should raise height limits along transit corridors to 8+ stories" },
+      { key: "ellis_act_repeal", q: "The Ellis Act should be repealed so landlords can't evict tenants to exit the rental business" },
+      { key: "corp_landlord_ban", q: "Corporate landlords owning more than 10 units should face extra regulation" },
+
+      // --- Homelessness ---
+      { key: "conservatorship_expand", q: "The city should be able to force severely mentally ill people into treatment" },
+      { key: "homeless_local_priority", q: "SF should prioritize homeless services for people who were already SF residents" },
+      { key: "safe_injection_sites", q: "Supervised drug consumption sites reduce harm and should be expanded" },
+      { key: "shelter_mandate", q: "If you refuse a shelter bed, the city should be able to enforce consequences" },
+      { key: "tiny_homes", q: "Tiny home villages are a good interim solution even if neighbors object" },
+      { key: "hotel_conversions", q: "The city was right to buy hotels for homeless housing during COVID and should keep them" },
+      { key: "panhandling_restrict", q: "Aggressive panhandling near businesses should be more strictly enforced" },
+      { key: "homeless_spending", q: "SF spends too much per homeless person for the results we get" },
+
+      // --- Public Safety & Policing ---
+      { key: "police_staffing", q: "SFPD should be fully staffed to its authorized strength of 2,182 officers" },
+      { key: "surveillance_cameras", q: "More public safety cameras and license plate readers make the city safer" },
+      { key: "private_security", q: "Neighborhoods should be able to hire private security patrols" },
+      { key: "drug_market_crackdown", q: "Shutting down open-air drug markets is worth aggressive enforcement" },
+      { key: "shoplifting_prosecute", q: "Shoplifting should be prosecuted more aggressively even for small amounts" },
+      { key: "da_jenkins_good", q: "DA Brooke Jenkins has been good for public safety" },
+      { key: "police_drones", q: "SFPD should be allowed to use drones for surveillance and response" },
+      { key: "car_break_in_priority", q: "Car break-ins should be a higher enforcement priority than they are" },
+      { key: "restorative_justice", q: "Restorative justice programs work better than jail for nonviolent offenses" },
+      { key: "ice_cooperation", q: "SFPD should never cooperate with federal immigration enforcement, even for violent crime suspects" },
+
+      // --- Transit & Streets ---
+      { key: "bike_lanes_remove_parking", q: "Protected bike lanes are worth removing car lanes and parking" },
+      { key: "great_highway", q: "The Great Highway should be permanently car-free" },
+      { key: "car_free_downtown", q: "Parts of downtown should be permanently car-free" },
+      { key: "muni_free", q: "Muni should be free for all riders" },
+      { key: "muni_parcel_tax", q: "I'd pay a parcel tax to prevent Muni service cuts" },
+      { key: "congestion_pricing", q: "SF should charge drivers a fee to enter downtown during peak hours" },
+      { key: "parking_minimums_gone", q: "New buildings shouldn't be required to include any parking" },
+      { key: "waymo_good", q: "Self-driving cars are good for SF and should be encouraged" },
+      { key: "slow_streets_permanent", q: "Slow streets should be made permanent in neighborhoods that want them" },
+      { key: "ebikes_sidewalk_ban", q: "E-bikes and scooters on sidewalks should be strictly enforced" },
+      { key: "freeway_removal", q: "SF should consider removing the I-280 freeway stub and building housing" },
+
+      // --- Budget & Taxes ---
+      { key: "prop13_reform", q: "Commercial property tax (Prop 13) should be reformed to increase city revenue" },
+      { key: "tech_tax", q: "Large tech companies should pay higher local taxes" },
+      { key: "ceo_tax", q: "Companies where executives earn 100x+ the median worker should pay a surcharge" },
+      { key: "vacancy_tax", q: "Vacant storefronts should face increasing tax penalties" },
+      { key: "small_biz_tax_cut", q: "Small businesses need tax cuts even if it means less city revenue" },
+      { key: "nonprofit_accountability", q: "City-funded nonprofits should face stricter performance requirements" },
+      { key: "city_workforce_bloat", q: "The city has too many employees for the services it delivers" },
+      { key: "pension_reform", q: "City worker pension costs are unsustainable and need reform" },
+      { key: "rainy_day_fund", q: "The city should build a larger rainy day fund even if it means cutting programs now" },
+      { key: "tourism_tax_raise", q: "Hotel taxes should be raised to fund city services — tourists can afford it" },
+
+      // --- Government & Democracy ---
+      { key: "mayor_power", q: "The mayor should have more power over city departments and commissions" },
+      { key: "commission_reform", q: "SF has too many commissions and they should be streamlined" },
+      { key: "term_limits_lifetime", q: "Supervisors should face lifetime term limits, not just consecutive ones" },
+      { key: "district_elections", q: "District elections are better for SF than citywide at-large elections" },
+      { key: "recall_too_easy", q: "It's too easy to recall elected officials in SF" },
+      { key: "public_financing", q: "Public financing of campaigns reduces corruption and should be expanded" },
+      { key: "pac_spending_limit", q: "Independent PAC spending on local races should be more restricted" },
+      { key: "ballot_measure_overload", q: "SF puts too many things on the ballot that should be decided by elected officials" },
+      { key: "sunshine_ordinance", q: "Government transparency rules are worth the inefficiency they create" },
+      { key: "civilian_oversight_police", q: "Civilian oversight of police should have real disciplinary power" },
+
+      // --- Education ---
+      { key: "school_closure", q: "SFUSD should close underenrolled schools to save money" },
+      { key: "school_choice", q: "Parents should be able to choose any public school in the city, not just their neighborhood" },
+      { key: "charter_schools", q: "Charter schools give families options that traditional public schools don't" },
+      { key: "lowell_merit", q: "Lowell High School should use merit-based admissions, not a lottery" },
+      { key: "teacher_pay_raise", q: "SF teachers deserve a significant raise even if it means budget cuts elsewhere" },
+      { key: "school_board_elected", q: "An elected school board is better than mayoral control of schools" },
+      { key: "free_city_college", q: "Free City College is worth the cost to taxpayers" },
+      { key: "phones_in_school", q: "Phones should be banned in SF classrooms during instruction" },
+
+      // --- Land Use & Environment ---
+      { key: "ceqa_reform", q: "CEQA is used too often to block housing and needs reform" },
+      { key: "shadow_rule_housing", q: "The shadow rule should not be used to block housing near parks" },
+      { key: "waterfront_development", q: "SF's waterfront should allow more commercial development" },
+      { key: "golden_gate_park_cars", q: "Cars should be permanently banned from Golden Gate Park" },
+      { key: "tree_removal_housing", q: "It's OK to remove some trees if it means building more housing" },
+      { key: "climate_emergency_spend", q: "Climate adaptation should be a top budget priority even during deficits" },
+      { key: "gas_stove_ban", q: "Banning gas stoves in new construction is the right call" },
+      { key: "treasure_island_develop", q: "Treasure Island development is a good idea despite sea level rise concerns" },
+
+      // --- Culture & Quality of Life ---
+      { key: "nightlife_expand", q: "SF should make it easier to open late-night venues and extend bar hours" },
+      { key: "arts_funding_cuts", q: "Arts and culture funding should be protected even during budget cuts" },
+      { key: "street_vendor_crackdown", q: "Unlicensed street vendors should be more strictly regulated" },
+      { key: "public_drinking", q: "Drinking in parks should be legal like it is in many European cities" },
+      { key: "noise_complaints", q: "Noise complaints shouldn't be able to shut down venues that were there first" },
+      { key: "tourism_priority", q: "SF focuses too much on attracting tourists instead of serving residents" },
+      { key: "dog_policy", q: "Off-leash dogs in city parks are fine and the rules are too strict" },
+      { key: "street_cleaning_fines", q: "Street cleaning parking tickets are just a revenue grab, not about cleanliness" },
+
+      // --- Equity & Identity ---
+      { key: "reparations", q: "SF should implement some form of reparations for Black residents" },
+      { key: "sanctuary_city", q: "SF should maintain its sanctuary city policy regardless of federal pressure" },
+      { key: "equity_lens_slow", q: "The city's equity review process slows things down more than it helps" },
+      { key: "affirmative_action_city", q: "City hiring should prioritize diversity even if other candidates score higher" },
+      { key: "sro_preservation", q: "SRO hotels should be preserved as housing even if the buildings are in poor condition" },
+      { key: "language_access", q: "City services in multiple languages are worth the extra cost" },
+      { key: "displacement_prevention", q: "Preventing displacement of longtime residents matters more than adding new housing units" },
+      { key: "public_bank", q: "SF should create a public bank to invest in underserved communities" },
+
+      // --- Tech & Innovation ---
+      { key: "ai_city_services", q: "The city should use AI to make government services faster, even if it replaces some workers" },
+      { key: "tech_bro_problem", q: "The tech industry has done more harm than good for SF's character" },
+      { key: "delivery_robot_ban", q: "Delivery robots on sidewalks should be banned" },
+      { key: "data_privacy_local", q: "SF should pass its own data privacy laws stricter than state or federal" },
+      { key: "remote_work_tax", q: "Companies with mostly remote workers should still pay SF business taxes if headquartered here" },
+    ];
+
+    let infIndex = 0;
+
+    function initInfinite() {
+      const dotsEl = document.getElementById('dots');
+      dotsEl.innerHTML = DEEP_QUESTIONS.map((_, i) =>
+        `<div class="dot${i === 0 ? ' current' : ''}" id="dot-${i}"></div>`
+      ).join('');
+      showInfQuestion();
+    }
+
+    function showInfQuestion() {
+      if (infIndex >= DEEP_QUESTIONS.length) {
+        finish();
+        return;
+      }
+      const q = DEEP_QUESTIONS[infIndex];
+      document.getElementById('inf-question').textContent = `"${q.q}"`;
+      const pct = Math.round((infIndex / DEEP_QUESTIONS.length) * 100);
+      let motivator = '';
+      if (infIndex >= 50) motivator = ' — YOU KNOW MORE ABOUT YOUR POLITICS THAN 95% OF SF';
+      else if (infIndex >= 25) motivator = ' — MORE THAN MOST VOTERS EVER ARTICULATE';
+      else if (infIndex >= 10) motivator = ' — GETTING SPECIFIC NOW';
+      else if (infIndex >= 5) motivator = ' — NICE, KEEP GOING';
+      document.getElementById('inf-counter').textContent =
+        `${infIndex} OF ${DEEP_QUESTIONS.length} ANSWERED${motivator}`;
+
+      document.querySelectorAll('#dots .dot').forEach((d, i) => {
+        d.classList.remove('current');
+        if (i < infIndex) d.classList.add('filled');
+        if (i === infIndex) d.classList.add('current');
+      });
+    }
+
+    async function infPick(value) {
+      const q = DEEP_QUESTIONS[infIndex];
+      deepAnswers[q.key] = value;
+
+      // Flash the button
+      const btns = document.querySelectorAll('#inf-options button');
+      btns.forEach(b => {
+        b.style.pointerEvents = 'none';
+        if (b.textContent.toLowerCase() === value) {
+          b.style.background = value === 'disagree' ? '#9a4a4a' : '#4a7c59';
+          b.style.color = '#e8dcc4';
+          b.style.borderColor = value === 'disagree' ? '#7a3a3a' : '#3a5c40';
+        }
+      });
+
+      await saveToDb({ preferences: { ...preferences, ...deepAnswers } });
+      flashSaved('inf-saved');
+
+      setTimeout(() => {
+        btns.forEach(b => {
+          b.style.pointerEvents = '';
+          b.style.background = '';
+          b.style.color = '';
+          b.style.borderColor = '';
+        });
+        infIndex++;
+        showInfQuestion();
+      }, 300);
+    }
+
+    function finish() {
+      document.getElementById('freetext-card').style.display = 'none';
+      document.getElementById('core-card').style.display = 'none';
+      document.getElementById('engage-card').style.display = 'none';
+      document.getElementById('infinite-card').style.display = 'none';
+      document.getElementById('final-view').style.display = 'block';
+    }
+
+    // Init — handled by resolveUser() above
+    if (uid && !infiniteStarted) { initInfinite(); infiniteStarted = true; }
+  </script>
+  <script>
+    // ─── SPEECH BUBBLES ───
+    const speechTexts = [
+      "HOUSING: AGREE OR DISAGREE?",
+      "YOUR PRIORITIES SAVED",
+      "TELL US WHAT MATTERS",
+      "PERSONALIZING YOUR BRIEFING",
+      "67 QUESTIONS ANSWERED!",
+      "BIKE LANES: WHERE DO YOU STAND?",
+      "YOUR VOICE SHAPES YOUR DIGEST",
+      "RENT CONTROL: IT'S COMPLICATED",
+      "ALMOST DONE...",
+      "EVERY ANSWER HELPS",
+      "MUNI SHOULD BE FREE??",
+      "SURVEILLANCE: SAFER OR SCARY?",
+      "YOUR DISTRICT YOUR PRIORITIES",
+      "SKIP ANY YOU'RE UNSURE ABOUT",
+      "PREFERENCES SAVED INSTANTLY",
+    ];
+
+    function spawnBubbles() {
+      const container = document.getElementById('speechBubbles');
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      speechTexts.forEach((text, i) => {
+        const el = document.createElement('div');
+        el.className = 'speech';
+        el.textContent = text;
+        el.style.left = (10 + Math.random() * (W - 160)) + 'px';
+        el.style.top = (H * 0.05 + Math.random() * (H * 0.25)) + 'px';
+        el.style.animationDelay = (i * 3.2 + Math.random() * 2) + 's';
+        el.style.animationDuration = (10 + Math.random() * 6) + 's';
+        container.appendChild(el);
+      });
+    }
+
+    spawnBubbles();
+
+    // ─── PIXEL ART CANVAS: POLLING PLACE INTERIOR ───
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+    const SCALE = 3;
+
+    let W, H, gW, gH;
+
+    function resize() {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = W;
+      canvas.height = H;
+      gW = Math.floor(W / SCALE);
+      gH = Math.floor(H / SCALE);
+    }
+
+    resize();
+    window.addEventListener('resize', () => {
+      resize();
+      initVoters();
+    });
+
+    const PAL = {
+      wall: '#d8d0b8', wallDark: '#c0b898', wallAccent: '#b8a878',
+      floor: '#a89878', floorDark: '#988868', floorTile: '#b8a888',
+      ceiling: '#e0d8c0', ceilingBeam: '#c8b890',
+      booth: '#3060a0', boothCurtain: '#4070b0', boothFrame: '#2a4a7a',
+      table: '#8b7355', tableDark: '#6a5a40',
+      banner: '#c04040', bannerText: '#f0e8d0',
+      flag: '#3060a0', flagRed: '#c04040', flagWhite: '#e8e8e8',
+      sign: '#f0e8d0', signBorder: '#8b6914', signText: '#2a2218',
+      door: '#5a3a2a', doorFrame: '#8b6914',
+      window: '#80b8d0', windowFrame: '#6a5a40',
+      skin: ['#f0c8a0','#d4a878','#c09060','#8b6848','#e8b890','#a07850'],
+      hair: ['#4a3020','#8b6848','#c0a060','#d04040','#404040','#2a2a2a','#e0c890'],
+      shirt: ['#d04040','#4080d0','#40b040','#d0a020','#d060a0','#6040c0','#40c0c0','#d07020','#e0e0e0','#8060d0'],
+      pants: ['#3a3a5a','#5a4a3a','#2a4a2a','#4a3a2a','#2a2a4a'],
+      wood: '#8b7355',
+      sticker: '#f0e8d0', stickerText: '#c04040',
+      light: '#ffe8a0', lightOff: '#a0a080',
+    };
+
+    function px(x, y, c) {
+      ctx.fillStyle = c;
+      ctx.fillRect(Math.floor(x) * SCALE, Math.floor(y) * SCALE, SCALE, SCALE);
+    }
+
+    function pxR(x, y, w, h, c) {
+      ctx.fillStyle = c;
+      ctx.fillRect(Math.floor(x) * SCALE, Math.floor(y) * SCALE, Math.floor(w) * SCALE, Math.floor(h) * SCALE);
+    }
+
+    function lerpC(a, b, t) {
+      const ah = parseInt(a.slice(1), 16), bh = parseInt(b.slice(1), 16);
+      const ar = (ah >> 16) & 0xff, ag = (ah >> 8) & 0xff, ab = ah & 0xff;
+      const br = (bh >> 16) & 0xff, bg = (bh >> 8) & 0xff, bb = bh & 0xff;
+      return `rgb(${Math.round(ar + (br - ar) * t)},${Math.round(ag + (bg - ag) * t)},${Math.round(ab + (bb - ab) * t)})`;
+    }
+
+    const FONT = {
+      'A':[0b010,0b101,0b111,0b101,0b101],'B':[0b110,0b101,0b110,0b101,0b110],'C':[0b011,0b100,0b100,0b100,0b011],
+      'D':[0b110,0b101,0b101,0b101,0b110],'E':[0b111,0b100,0b110,0b100,0b111],'F':[0b111,0b100,0b110,0b100,0b100],
+      'G':[0b011,0b100,0b101,0b101,0b011],'H':[0b101,0b101,0b111,0b101,0b101],'I':[0b111,0b010,0b010,0b010,0b111],
+      'J':[0b001,0b001,0b001,0b101,0b010],'K':[0b101,0b101,0b110,0b101,0b101],'L':[0b100,0b100,0b100,0b100,0b111],
+      'M':[0b101,0b111,0b111,0b101,0b101],'N':[0b101,0b111,0b111,0b111,0b101],'O':[0b010,0b101,0b101,0b101,0b010],
+      'P':[0b110,0b101,0b110,0b100,0b100],'Q':[0b010,0b101,0b101,0b111,0b011],'R':[0b110,0b101,0b110,0b101,0b101],
+      'S':[0b011,0b100,0b010,0b001,0b110],'T':[0b111,0b010,0b010,0b010,0b010],'U':[0b101,0b101,0b101,0b101,0b010],
+      'V':[0b101,0b101,0b101,0b010,0b010],'W':[0b101,0b101,0b111,0b111,0b101],'X':[0b101,0b101,0b010,0b101,0b101],
+      'Y':[0b101,0b101,0b010,0b010,0b010],'Z':[0b111,0b001,0b010,0b100,0b111],' ':[0,0,0,0,0],
+      ':':[0b000,0b010,0b000,0b010,0b000],'!':[0b010,0b010,0b010,0b000,0b010],
+    };
+    function drawText(t, x, y, c) {
+      let cx = x;
+      for (const ch of t.toUpperCase()) {
+        const g = FONT[ch];
+        if (g) for (let r = 0; r < 5; r++) for (let col = 0; col < 3; col++) if (g[r] & (4 >> col)) px(cx + col, y + r, c);
+        cx += 4;
+      }
+    }
+
+    // ─── POLLING PLACE SCENE ───
+
+    function floorY() { return Math.floor(gH * 0.55); }
+
+    function drawRoom() {
+      // Ceiling
+      pxR(0, 0, gW, Math.floor(gH * 0.15), PAL.ceiling);
+      // Ceiling beams
+      for (let x = 0; x < gW; x += 24) {
+        pxR(x, 0, 2, Math.floor(gH * 0.15), PAL.ceilingBeam);
+      }
+
+      // Walls
+      const wallTop = Math.floor(gH * 0.15);
+      const fy = floorY();
+      pxR(0, wallTop, gW, fy - wallTop, PAL.wall);
+
+      // Wainscoting (lower wall panel)
+      const wainscotY = fy - 16;
+      pxR(0, wainscotY, gW, 16, PAL.wallDark);
+      pxR(0, wainscotY, gW, 1, PAL.wallAccent);
+
+      // Wall molding at top
+      pxR(0, wallTop, gW, 2, PAL.wallAccent);
+
+      // Floor - checkerboard tile
+      for (let x = 0; x < gW; x += 6) {
+        for (let y = fy; y < gH; y += 6) {
+          const checker = ((Math.floor(x / 6) + Math.floor(y / 6)) % 2 === 0);
+          pxR(x, y, 6, 6, checker ? PAL.floor : PAL.floorTile);
+        }
+      }
+      // Floor shine
+      const t = Date.now() * 0.0005;
+      for (let i = 0; i < 8; i++) {
+        const sx = (Math.floor(t * 10 + i * 37) % gW);
+        px(sx, fy + 2, '#c8b898');
+      }
+    }
+
+    function drawWindows() {
+      const wallTop = Math.floor(gH * 0.15);
+      const fy = floorY();
+      const winY = wallTop + 8;
+      const winH = Math.floor((fy - wallTop) * 0.45);
+      // Windows along back wall showing outside
+      for (let i = 0; i < Math.floor(gW / 40); i++) {
+        const wx = 20 + i * 40;
+        if (wx + 14 > gW - 10) break;
+        // Frame
+        pxR(wx - 1, winY - 1, 16, winH + 2, PAL.door);
+        // Glass - blue sky gradient
+        for (let y = 0; y < winH; y++) {
+          const gt = y / winH;
+          pxR(wx, winY + y, 14, 1, lerpC('#6090c0', '#90b8e0', gt));
+        }
+        // Cross frame
+        pxR(wx + 6, winY, 2, winH, PAL.door);
+        pxR(wx, winY + Math.floor(winH / 2), 14, 1, PAL.door);
+        // Sill
+        pxR(wx - 2, winY + winH, 18, 2, PAL.wallAccent);
+        // Sunbeam from window
+        const beamAlpha = 0.08 + Math.sin(Date.now() * 0.001 + i) * 0.03;
+        ctx.fillStyle = `rgba(255,240,200,${beamAlpha})`;
+        ctx.beginPath();
+        ctx.moveTo((wx + 2) * SCALE, (winY + winH) * SCALE);
+        ctx.lineTo((wx + 12) * SCALE, (winY + winH) * SCALE);
+        ctx.lineTo((wx + 20) * SCALE, gH * SCALE);
+        ctx.lineTo((wx - 6) * SCALE, gH * SCALE);
+        ctx.fill();
+      }
+    }
+
+    function drawFlag(fx, fy) {
+      // Pole
+      pxR(fx, fy - 30, 1, 32, '#808080');
+      px(fx, fy - 31, '#d0b040'); // finial
+      // Flag waving
+      const wave = Math.sin(Date.now() * 0.003) * 1;
+      const flagW = 10, flagH = 7;
+      for (let y = 0; y < flagH; y++) {
+        const wy = fy - 29 + y + Math.round(Math.sin(Date.now() * 0.004 + y * 0.5) * 0.5);
+        const stripe = y;
+        let c;
+        if (stripe === 0 || stripe === 2 || stripe === 4 || stripe === 6) c = PAL.flagRed;
+        else c = PAL.flagWhite;
+        if (y < 3 && true) {
+          // Blue canton
+          pxR(fx + 1, wy, 4, 1, PAL.flag);
+          pxR(fx + 5, wy, flagW - 4, 1, c);
+        } else {
+          pxR(fx + 1, wy, flagW, 1, c);
+        }
+      }
+      // Stars in canton
+      px(fx + 2, fy - 28 + Math.round(wave * 0.3), '#e8e8e8');
+      px(fx + 3, fy - 27, '#e8e8e8');
+    }
+
+    function drawVotingBooths() {
+      const fy = floorY();
+      const boothW = 16, boothH = 28;
+      const numBooths = Math.min(6, Math.floor((gW - 40) / 22));
+      const startX = 12;
+
+      for (let i = 0; i < numBooths; i++) {
+        const bx = startX + i * 22;
+        const by = fy - boothH;
+
+        // Back panel
+        pxR(bx, by, boothW, boothH, PAL.boothFrame);
+        pxR(bx + 1, by + 1, boothW - 2, boothH - 2, PAL.booth);
+
+        // Side panel (perspective)
+        pxR(bx + boothW, by + 2, 3, boothH - 2, PAL.boothFrame);
+
+        // Curtain (partially open on some)
+        const curtainOpen = (i + Math.floor(Date.now() / 8000)) % 3 === 0;
+        if (!curtainOpen) {
+          // Curtain fabric with folds
+          for (let y = 0; y < boothH - 4; y++) {
+            const fold = Math.sin(y * 0.8) * 0.3;
+            pxR(bx + 2, by + 2 + y, boothW - 4, 1,
+              fold > 0 ? PAL.boothCurtain : PAL.booth);
+          }
+          // Curtain rod
+          pxR(bx + 1, by + 1, boothW - 2, 1, '#808080');
+        } else {
+          // Open curtain bunched on sides
+          pxR(bx + 1, by + 1, 3, boothH - 3, PAL.boothCurtain);
+          pxR(bx + boothW - 4, by + 1, 3, boothH - 3, PAL.boothCurtain);
+          // Curtain rod visible
+          pxR(bx + 1, by + 1, boothW - 2, 1, '#808080');
+          // Shelf/desk inside
+          pxR(bx + 4, by + 14, boothW - 8, 2, PAL.table);
+        }
+
+        // Booth number
+        drawText(String(i + 1), bx + 6, by - 6, PAL.signText);
+
+        // Legs
+        pxR(bx, fy - 1, 2, 2, '#404040');
+        pxR(bx + boothW - 2, fy - 1, 2, 2, '#404040');
+      }
+    }
+
+    function drawCheckInTables() {
+      const fy = floorY();
+      const tableY = fy - 12;
+      const tableW = Math.min(50, Math.floor(gW * 0.3));
+      const tableX = gW - tableW - 15;
+
+      // Long table
+      pxR(tableX, tableY, tableW, 3, PAL.table);
+      pxR(tableX, tableY + 3, tableW, 1, PAL.tableDark);
+      // Table legs
+      pxR(tableX + 2, tableY + 3, 2, 10, PAL.tableDark);
+      pxR(tableX + tableW - 4, tableY + 3, 2, 10, PAL.tableDark);
+      // Tablecloth front
+      pxR(tableX, tableY + 1, tableW, 2, '#e0e0e0');
+
+      // Ballot boxes on table
+      pxR(tableX + 4, tableY - 6, 8, 6, '#606060');
+      pxR(tableX + 5, tableY - 4, 6, 1, '#404040'); // slot
+      pxR(tableX + 4, tableY - 7, 8, 1, '#707070');
+
+      // Stack of "I VOTED" stickers
+      pxR(tableX + 16, tableY - 3, 6, 3, PAL.sticker);
+      drawText('I', tableX + 17, tableY - 2, PAL.stickerText);
+
+      // Binder/roster
+      pxR(tableX + 26, tableY - 2, 8, 2, '#404040');
+      pxR(tableX + 27, tableY - 1, 6, 1, '#e0e0d0');
+
+      // Second table for "I Voted" stickers
+      if (gW > 200) {
+        const t2x = Math.floor(gW * 0.45);
+        pxR(t2x, tableY + 2, 20, 3, PAL.table);
+        pxR(t2x, tableY + 5, 20, 1, PAL.tableDark);
+        pxR(t2x + 2, tableY + 5, 2, 8, PAL.tableDark);
+        pxR(t2x + 16, tableY + 5, 2, 8, PAL.tableDark);
+        // Sticker pile
+        for (let s = 0; s < 4; s++) {
+          pxR(t2x + 3 + s * 4, tableY, 3, 2, PAL.sticker);
+        }
+      }
+    }
+
+    function drawSigns() {
+      const wallTop = Math.floor(gH * 0.15);
+
+      // "VOTE HERE" banner
+      const bannerW = 48, bannerY = wallTop + 4;
+      const bannerX = Math.floor(gW / 2) - Math.floor(bannerW / 2);
+      pxR(bannerX, bannerY, bannerW, 12, PAL.banner);
+      pxR(bannerX, bannerY, bannerW, 1, '#a03030');
+      pxR(bannerX, bannerY + 11, bannerW, 1, '#a03030');
+      drawText('VOTE HERE', bannerX + 8, bannerY + 4, PAL.bannerText);
+
+      // Arrow signs on walls
+      const arrowY = wallTop + 20;
+      // Left arrow
+      pxR(6, arrowY, 14, 8, PAL.sign);
+      pxR(6, arrowY, 14, 1, PAL.signBorder);
+      pxR(6, arrowY + 7, 14, 1, PAL.signBorder);
+      pxR(6, arrowY, 1, 8, PAL.signBorder);
+      pxR(19, arrowY, 1, 8, PAL.signBorder);
+      // Arrow
+      pxR(9, arrowY + 3, 8, 2, PAL.signText);
+      px(8, arrowY + 3, PAL.signText);
+      px(8, arrowY + 4, PAL.signText);
+      px(7, arrowY + 3, PAL.signText);
+
+      // Right arrow for exit
+      if (gW > 150) {
+        const rax = gW - 22;
+        pxR(rax, arrowY, 16, 8, PAL.sign);
+        pxR(rax, arrowY, 16, 1, PAL.signBorder);
+        pxR(rax, arrowY + 7, 16, 1, PAL.signBorder);
+        drawText('EXIT', rax + 2, arrowY + 2, PAL.signText);
+      }
+    }
+
+    function drawLights() {
+      const ceilY = Math.floor(gH * 0.15);
+      for (let i = 0; i < Math.floor(gW / 30); i++) {
+        const lx = 15 + i * 30;
+        // Fluorescent fixture
+        pxR(lx - 6, ceilY, 12, 2, '#a0a0a0');
+        // Light tube
+        const flicker = Math.sin(Date.now() * 0.002 + i * 7) > -0.995;
+        pxR(lx - 5, ceilY + 2, 10, 1, flicker ? PAL.light : PAL.lightOff);
+        // Glow on ceiling
+        if (flicker) {
+          ctx.fillStyle = 'rgba(255,240,200,0.06)';
+          ctx.fillRect((lx - 10) * SCALE, 0, 20 * SCALE, (ceilY + 3) * SCALE);
+        }
+      }
+    }
+
+    function drawDoor() {
+      const fy = floorY();
+      const wallTop = Math.floor(gH * 0.15);
+      // Double doors on far right
+      const dx = gW - 24, dy = fy - 24;
+      pxR(dx, dy, 20, 24, PAL.door);
+      pxR(dx + 9, dy, 2, 24, PAL.door); // center divide
+      // Door frame
+      pxR(dx - 1, dy - 1, 22, 1, PAL.doorFrame);
+      pxR(dx - 1, dy, 1, 24, PAL.doorFrame);
+      pxR(dx + 20, dy, 1, 24, PAL.doorFrame);
+      // Door handles
+      px(dx + 7, dy + 12, '#c0c0c0');
+      px(dx + 13, dy + 12, '#c0c0c0');
+      // Glass panels
+      pxR(dx + 2, dy + 2, 6, 10, PAL.window);
+      pxR(dx + 12, dy + 2, 6, 10, PAL.window);
+      // "POLLING PLACE" sign above door
+      pxR(dx - 2, dy - 8, 24, 7, PAL.sign);
+      pxR(dx - 2, dy - 8, 24, 1, PAL.signBorder);
+      pxR(dx - 2, dy - 2, 24, 1, PAL.signBorder);
+      drawText('POLLS', dx + 2, dy - 6, PAL.signText);
+    }
+
+    // ─── DECORATIONS ───
+    function drawBunting() {
+      const wallTop = Math.floor(gH * 0.15);
+      const colors = ['#c04040', '#e8e8e8', '#3060a0'];
+      // Draped bunting across the top of the wall
+      for (let seg = 0; seg < Math.floor(gW / 30); seg++) {
+        const sx = seg * 30 + 5;
+        const ex = sx + 28;
+        const midX = (sx + ex) / 2;
+        // Drape curve
+        for (let x = sx; x <= ex; x++) {
+          const t = (x - sx) / (ex - sx);
+          const sag = Math.sin(t * Math.PI) * 5;
+          const cy = wallTop + 3 + Math.floor(sag);
+          const ci = Math.floor((x - sx) / 3) % 3;
+          px(x, cy, colors[ci]);
+          if (sag > 2) px(x, cy - 1, colors[(ci + 1) % 3]);
+        }
+        // Anchor points
+        px(sx, wallTop + 3, '#808080');
+        px(ex, wallTop + 3, '#808080');
+      }
+    }
+
+    function drawBalloons() {
+      const t = Date.now() * 0.001;
+      const balloonColors = ['#d04040', '#4080d0', '#40b040', '#d0a020', '#d060a0', '#f0e040'];
+      const fy = floorY();
+      const numBooths = Math.min(6, Math.floor((gW - 40) / 22));
+
+      for (let i = 0; i < numBooths - 1; i++) {
+        const anchorX = 12 + (i + 1) * 22 - 3;
+        const anchorY = fy;
+
+        // Weight/base on floor
+        pxR(anchorX - 1, anchorY - 2, 3, 2, '#808080');
+        px(anchorX, anchorY - 3, '#909090');
+
+        for (let b = 0; b < 3; b++) {
+          const spread = (b - 1) * 3;
+          const stringLen = 18 + b * 4;
+          const wobble = Math.sin(t * 0.6 + b * 2.2 + i * 3.7) * 1.5;
+          const sway = Math.sin(t * 0.4 + b * 1.5 + i * 2.1) * 1;
+
+          const tipX = anchorX + spread + wobble;
+          const tipY = anchorY - 3 - stringLen + sway;
+          const bc = balloonColors[(b + i * 2) % balloonColors.length];
+
+          // String - gentle curve from anchor to balloon
+          for (let s = 0; s < stringLen; s++) {
+            const st = s / stringLen;
+            const curveX = anchorX + (tipX - anchorX) * st + Math.sin(st * Math.PI + t * 0.8 + b) * 1.2;
+            const curveY = anchorY - 3 - s;
+            px(Math.floor(curveX), Math.floor(curveY), '#a0a0a0');
+          }
+
+          // Balloon body
+          const bx = Math.floor(tipX);
+          const by = Math.floor(tipY);
+          pxR(bx - 1, by, 3, 4, bc);
+          px(bx, by - 1, bc);
+          pxR(bx - 1, by + 1, 3, 1, bc);
+          // Highlight
+          px(bx - 1, by, lerpC(bc, '#ffffff', 0.5));
+          px(bx, by - 1, lerpC(bc, '#ffffff', 0.3));
+          // Knot
+          px(bx, by + 4, '#707070');
+        }
+      }
+    }
+
+    function drawStarBanner() {
+      const wallTop = Math.floor(gH * 0.15);
+      // "YOUR VOICE MATTERS" banner below the VOTE HERE one
+      const bw2 = 82, by2 = wallTop + 18;
+      const bx2 = Math.floor(gW / 2) - Math.floor(bw2 / 2);
+      if (bx2 < 2) return;
+      pxR(bx2, by2, bw2, 10, PAL.sign);
+      pxR(bx2, by2, bw2, 1, PAL.signBorder);
+      pxR(bx2, by2 + 9, bw2, 1, PAL.signBorder);
+      pxR(bx2, by2, 1, 10, PAL.signBorder);
+      pxR(bx2 + bw2 - 1, by2, 1, 10, PAL.signBorder);
+      drawText('YOUR VOICE MATTERS', bx2 + 6, by2 + 3, PAL.signText);
+    }
+
+    function drawStreamers() {
+      const ceilY = Math.floor(gH * 0.15);
+      const colors = ['#c04040', '#3060a0', '#d0a020', '#40a040'];
+      const t = Date.now() * 0.0008;
+      // Twisted streamers hanging from ceiling
+      for (let i = 0; i < Math.floor(gW / 20); i++) {
+        const sx = 10 + i * 20;
+        const sc = colors[i % colors.length];
+        const len = 8 + (i % 3) * 3;
+        for (let y = 0; y < len; y++) {
+          const twist = Math.sin(t + y * 0.6 + i * 2) * 2;
+          px(Math.floor(sx + twist), ceilY + y, sc);
+        }
+      }
+    }
+
+    // ─── VOTERS ───
+    class Voter {
+      constructor(cfg) {
+        this.x = cfg.x || 0;
+        this.y = cfg.y || 0;
+        this.speed = cfg.speed || 0.08 + Math.random() * 0.08;
+        this.skinC = PAL.skin[Math.floor(Math.random() * PAL.skin.length)];
+        this.hairC = PAL.hair[Math.floor(Math.random() * PAL.hair.length)];
+        this.shirtC = cfg.shirtColor || PAL.shirt[Math.floor(Math.random() * PAL.shirt.length)];
+        this.pantsC = PAL.pants[Math.floor(Math.random() * PAL.pants.length)];
+        this.dir = 1;
+        this.frame = Math.random() * 100;
+        this.type = cfg.type || 'voter';
+        this.waypoints = cfg.waypoints || null;
+        this.wpIdx = 0;
+        this.waiting = 0;
+        this.waitTime = cfg.waitTime || 80;
+        this.hasSticker = cfg.hasSticker || false;
+      }
+
+      update() {
+        if (this.waiting > 0) { this.waiting--; return; }
+        if (this.waypoints) {
+          const wp = this.waypoints[this.wpIdx];
+          this.targetX = wp.x;
+          this.targetY = wp.y;
+        }
+        const dx = (this.targetX || this.x) - this.x;
+        const dy = (this.targetY || this.y) - this.y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d < 1) {
+          if (this.waypoints) {
+            this.waiting = this.waitTime + Math.random() * 40;
+            this.wpIdx = (this.wpIdx + 1) % this.waypoints.length;
+          }
+          return;
+        }
+        this.x += dx / d * this.speed;
+        this.y += dy / d * this.speed;
+        this.dir = dx > 0 ? 1 : -1;
+        this.frame += 0.08;
+      }
+
+      draw() {
+        const x = Math.floor(this.x), y = Math.floor(this.y);
+        const w = Math.sin(this.frame * 3) > 0 ? 1 : 0;
+        // Legs
+        if (w) {
+          px(x - 1, y + 5, this.pantsC); px(x + 1, y + 5, this.pantsC);
+          px(x - 1, y + 6, '#2a2a2a'); px(x + 1, y + 6, '#2a2a2a');
+        } else {
+          px(x, y + 5, this.pantsC); px(x - 1, y + 5, this.pantsC);
+          px(x, y + 6, '#2a2a2a'); px(x - 1, y + 6, '#2a2a2a');
+        }
+        // Body
+        pxR(x - 1, y + 2, 3, 3, this.shirtC);
+        // Head
+        pxR(x - 1, y, 3, 2, this.skinC);
+        pxR(x - 1, y - 1, 3, 1, this.hairC);
+
+        // Poll worker vest
+        if (this.type === 'worker') {
+          pxR(x - 1, y + 2, 3, 3, '#e0a020');
+          px(x, y + 2, '#d09010');
+        }
+
+        // Holding ballot
+        if (this.type === 'voter' && this.waiting > 20) {
+          px(x + this.dir * 2, y + 3, '#e8e0d0');
+          px(x + this.dir * 2, y + 2, '#e8e0d0');
+        }
+
+        // "I Voted" sticker
+        if (this.hasSticker) {
+          px(x, y + 2, '#f0e8d0');
+          px(x + 1, y + 2, '#c04040');
+        }
+      }
+    }
+
+    let voters = [];
+
+    function initVoters() {
+      voters = [];
+      const fy = floorY();
+      const tableX = gW - 50 - 15;
+
+      // People in line to check in
+      for (let i = 0; i < 5; i++) {
+        const lx = tableX - 8 - i * 8;
+        voters.push(new Voter({
+          x: lx, y: fy - 8,
+          waypoints: [
+            { x: lx, y: fy - 8 },
+            { x: lx + 1, y: fy - 7 },
+            { x: lx - 1, y: fy - 8 },
+          ],
+          waitTime: 150 + Math.random() * 200,
+          speed: 0.02,
+        }));
+      }
+
+      // Poll workers behind table
+      for (let i = 0; i < 3; i++) {
+        voters.push(new Voter({
+          x: tableX + 8 + i * 14, y: fy - 16,
+          waypoints: [
+            { x: tableX + 8 + i * 14, y: fy - 16 },
+            { x: tableX + 9 + i * 14, y: fy - 15 },
+          ],
+          waitTime: 200 + Math.random() * 100,
+          speed: 0.01,
+          type: 'worker',
+          shirtColor: '#e0a020',
+        }));
+      }
+
+      // People at voting booths
+      const numBooths = Math.min(6, Math.floor((gW - 40) / 22));
+      for (let i = 0; i < numBooths; i++) {
+        if (Math.random() < 0.6) {
+          const bx = 12 + i * 22 + 6;
+          voters.push(new Voter({
+            x: bx, y: fy - 12,
+            waypoints: [
+              { x: bx, y: fy - 12 },
+              { x: bx, y: fy - 11 },
+            ],
+            waitTime: 300 + Math.random() * 300,
+            speed: 0.01,
+          }));
+        }
+      }
+
+      // People walking to/from booths
+      for (let i = 0; i < 4; i++) {
+        const startX = tableX - 20 - Math.random() * 30;
+        const boothX = 12 + Math.floor(Math.random() * numBooths) * 22 + 6;
+        voters.push(new Voter({
+          x: startX, y: fy - 6,
+          waypoints: [
+            { x: boothX, y: fy - 10 },
+            { x: boothX, y: fy - 12 },
+            { x: startX, y: fy - 6 },
+            { x: gW - 20, y: fy - 8 },
+          ],
+          waitTime: 100 + Math.random() * 200,
+          speed: 0.06 + Math.random() * 0.04,
+          hasSticker: Math.random() < 0.5,
+        }));
+      }
+
+      // People leaving with stickers
+      for (let i = 0; i < 3; i++) {
+        voters.push(new Voter({
+          x: gW - 30 + Math.random() * 10, y: fy - 6 - Math.random() * 4,
+          waypoints: [
+            { x: gW + 5, y: fy - 6 },
+            { x: gW - 40, y: fy - 8 },
+            { x: gW - 25, y: fy - 5 },
+          ],
+          waitTime: 60 + Math.random() * 100,
+          speed: 0.1 + Math.random() * 0.06,
+          hasSticker: true,
+        }));
+      }
+
+      // Person entering through door
+      voters.push(new Voter({
+        x: gW - 22, y: fy - 8,
+        waypoints: [
+          { x: gW - 40, y: fy - 7 },
+          { x: tableX - 40, y: fy - 7 },
+          { x: tableX - 8, y: fy - 8 },
+          { x: gW - 22, y: fy - 8 },
+        ],
+        waitTime: 80,
+        speed: 0.08,
+      }));
+    }
+
+    function drawSky() {
+      // No sky — this is an interior. drawSky exists so render() doesn't break.
+      for (let y = 0; y < skyH; y++) {
+        const t = y / skyH;
+        let c;
+        if (t < 0.3) c = lerpC(PAL.sky1, PAL.sky2, t / 0.3);
+        else if (t < 0.6) c = lerpC(PAL.sky2, PAL.sky3, (t - 0.3) / 0.3);
+        else if (t < 0.85) c = lerpC(PAL.sky3, PAL.sky4, (t - 0.6) / 0.25);
+        else c = lerpC(PAL.sky4, PAL.skyPink, (t - 0.85) / 0.15);
+        pxR(0, y, gW, 1, c);
+      }
+      const seeds = [23, 67, 112, 45, 189, 234, 78, 156, 201, 12, 90, 145, 178, 56, 210, 34, 167, 89, 123, 245, 33, 77, 150, 198, 220, 8, 60, 130, 170, 250];
+      for (let i = 0; i < seeds.length; i++) {
+        const sx = (seeds[i] * 7 + i * 31) % gW, sy = (seeds[i] * 3 + i * 17) % Math.floor(skyH * 0.65);
+        if (Math.sin(Date.now() * 0.003 + i) * 0.3 + 0.7 > 0.5) px(sx, sy, PAL.stars);
+      }
+    }
+
+
+    function render() {
+      if (voters.length === 0) initVoters();
+      ctx.clearRect(0, 0, W, H);
+      drawRoom();
+      drawWindows();
+      drawLights();
+      drawBunting();
+      drawStreamers();
+      drawVotingBooths();
+      drawCheckInTables();
+      drawSigns();
+      drawStarBanner();
+      drawDoor();
+      drawBalloons();
+      drawFlag(8, floorY() - 6);
+      if (gW > 160) drawFlag(gW - 30, floorY() - 6);
+      for (const v of voters) { v.update(); v.draw(); }
+      requestAnimationFrame(render);
+    }
+
+    render();
+  </script>
+</body>
+</html>

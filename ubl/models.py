@@ -78,13 +78,15 @@ class UserProfile(BaseModel):
 # ---------------------------------------------------------------------------
 
 class DigestItem(BaseModel):
-    """A single news item in the weekly digest."""
+    """A single item in the weekly digest, oriented around intervention windows."""
 
     article_id: str
     headline: str
     summary: str
     why_it_matters: str
     source_url: str
+    decision_stage: str = "none"  # committee | full_board | commission | agency | ballot | implementation | none
+    has_action_window: bool = False
 
 
 class ActionRecommendation(BaseModel):
@@ -96,6 +98,14 @@ class ActionRecommendation(BaseModel):
     alternatives: list[str] = []
     draft_text: str | None = None
     contact_info: str | None = None
+    # Intervention-routing fields
+    action_type: str = "email"  # email | public_comment | hearing | vote | track | ceqa_comment | appeal
+    channel: str = ""  # specific inbox, portal, or process
+    recipient: str = ""  # who receives this input
+    deadline: str | None = None  # when the window closes
+    decision_stage: str = ""  # committee | full_board | commission | agency | ballot | implementation
+    legal_weight: str = "none"  # none | procedural_record | legally_binding | preserves_standing
+    scope_advice: str = ""  # widen | narrow | neutral — and why
 
 
 class LeverageAssessment(BaseModel):
@@ -109,6 +119,7 @@ class LeverageAssessment(BaseModel):
 class Digest(BaseModel):
     """The complete weekly digest for a user."""
 
+    id: str | None = None  # database ID, set after storage
     user_id: str
     week_of: date
     items: list[DigestItem] = []

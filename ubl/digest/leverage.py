@@ -73,10 +73,23 @@ def assess_leverage(
         for a in high_priority[:15]
     ]
 
+    freetext = user.preferences.get("freetext", {})
+    freetext_block = ""
+    if freetext:
+        parts = []
+        if freetext.get("priorities"):
+            parts.append(f"What matters to them: {freetext['priorities']}")
+        if freetext.get("tracking"):
+            parts.append(f"Tracking: {freetext['tracking']}")
+        if freetext.get("context"):
+            parts.append(f"About them: {freetext['context']}")
+        freetext_block = "\n".join(parts) + "\n"
+
     user_message = (
         f"## User Profile\n"
         f"District: {user.district or 'Unknown'}\n"
         f"Voter registered: {user.voter_registered}\n"
+        f"{freetext_block}"
         f"Preferences: {json.dumps(user.preferences)}\n"
         f"Engagement: {json.dumps(user.engagement_prefs)}\n\n"
         f"## Political Context\n{political_context}\n\n"
@@ -117,6 +130,13 @@ def assess_leverage(
                 alternatives=rec.get("alternatives", []),
                 draft_text=rec.get("draft_text"),
                 contact_info=rec.get("contact_info"),
+                action_type=rec.get("action_type", "email"),
+                channel=rec.get("channel", ""),
+                recipient=rec.get("recipient", ""),
+                deadline=rec.get("deadline"),
+                decision_stage=rec.get("decision_stage", ""),
+                legal_weight=rec.get("legal_weight", "none"),
+                scope_advice=rec.get("scope_advice", ""),
             )
             for rec in result.get("recommendations", [])
         ]

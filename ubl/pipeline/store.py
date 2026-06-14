@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import functools
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from supabase import Client, create_client
 
@@ -16,9 +16,14 @@ logger = logging.getLogger(__name__)
 
 @functools.lru_cache(maxsize=1)
 def get_supabase_client() -> Client:
-    """Create and cache a Supabase client."""
+    """Create and cache a Supabase client.
+
+    Prefers the service_role key (bypasses RLS — pipeline needs full access).
+    Falls back to the anon key for pre-auth-migration setups.
+    """
     settings = get_settings()
-    return create_client(settings.supabase_url, settings.supabase_key)
+    key = settings.supabase_service_key or settings.supabase_key
+    return create_client(settings.supabase_url, key)
 
 
 def store_articles(articles: list[ClassifiedArticle]) -> int:
@@ -138,6 +143,33 @@ def get_stored_urls(urls: list[str]) -> set[str]:
         return set()
 
 
+def get_all_users() -> list[UserProfile]:
+    """Fetch all user profiles that haven't unsubscribed."""
+    client = get_supabase_client()
+    try:
+        try:
+            response = (
+                client.table("users").select("*").is_("unsubscribed_at", "null").execute()
+            )
+        except Exception:
+            # unsubscribed_at column may not exist yet (pre-migration)
+            response = client.table("users").select("*").execute()
+        return [
+            UserProfile(
+                id=row["id"],
+                email=row["email"],
+                district=row.get("district"),
+                voter_registered=row.get("voter_registered"),
+                preferences=row.get("preferences", {}),
+                engagement_prefs=row.get("engagement_prefs", {}),
+            )
+            for row in response.data
+        ]
+    except Exception:
+        logger.exception("Failed to fetch users")
+        return []
+
+
 def get_user_profile(user_id: str) -> UserProfile | None:
     """Fetch a user profile by ID.
 
@@ -197,7 +229,7 @@ def mark_digest_sent(digest_id: str) -> None:
 
     try:
         client.table("digests").update(
-            {"email_sent_at": datetime.utcnow().isoformat()}
+            {"email_sent_at": datetime.now(timezone.utc).isoformat()}
         ).eq("id", digest_id).execute()
         logger.info("Marked digest %s as sent", digest_id)
     except Exception:

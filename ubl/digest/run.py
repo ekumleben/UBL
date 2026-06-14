@@ -22,24 +22,35 @@ logger = logging.getLogger(__name__)
 
 
 def _load_political_context() -> str:
-    """Load the SF political context document.
+    """Load the SF political context and grammar documents.
 
-    Falls back to the example template if the real file doesn't exist.
+    The grammar is the stable structural layer (how SF politics works).
+    The context is the mutable layer (who's in office, what's active now).
+    Both are concatenated and passed to the LLM together.
     """
+    parts: list[str] = []
+
+    grammar_file = PROMPTS_DIR / "sf_political_grammar.md"
+    if grammar_file.exists():
+        parts.append(grammar_file.read_text(encoding="utf-8"))
+    else:
+        logger.warning("No political grammar document found")
+
     context_file = PROMPTS_DIR / "sf_political_context.md"
     if context_file.exists():
-        return context_file.read_text(encoding="utf-8")
+        parts.append(context_file.read_text(encoding="utf-8"))
+    else:
+        example_file = PROMPTS_DIR / "sf_political_context.example.md"
+        if example_file.exists():
+            logger.warning(
+                "Using example political context — create prompts/sf_political_context.md "
+                "with real data for better results"
+            )
+            parts.append(example_file.read_text(encoding="utf-8"))
+        else:
+            logger.warning("No political context document found")
 
-    example_file = PROMPTS_DIR / "sf_political_context.example.md"
-    if example_file.exists():
-        logger.warning(
-            "Using example political context — create prompts/sf_political_context.md "
-            "with real data for better results"
-        )
-        return example_file.read_text(encoding="utf-8")
-
-    logger.warning("No political context document found")
-    return "No political context available."
+    return "\n\n---\n\n".join(parts) if parts else "No political context available."
 
 
 def run_digest_pipeline(
@@ -104,13 +115,11 @@ def run_digest_pipeline(
             logger.info("Drafting action: %s", rec.action[:60])
             rec.draft_text = draft_action(rec, user, political_context)
 
-    # 7. Store
-    if not dry_run:
-        digest_id = store_digest(digest)
-        if digest_id:
-            logger.info("Digest stored with ID %s", digest_id)
-    else:
-        logger.info("Dry run — digest not stored")
+    # 7. Store (always store, even on dry run — console needs the data)
+    digest_id = store_digest(digest)
+    if digest_id:
+        digest.id = digest_id
+        logger.info("Digest stored with ID %s", digest_id)
 
     elapsed = time.time() - start
     logger.info(

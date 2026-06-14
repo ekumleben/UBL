@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UBL — Unsubscribe</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@400;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #1a1a2e; font-family: 'DM Sans', sans-serif; color: #e0dcd0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .card { background: rgba(232, 220, 196, 0.08); border: 1px solid rgba(139, 105, 20, 0.4); border-radius: 6px; padding: 36px; max-width: 440px; text-align: center; }
+    h1 { font-family: 'Press Start 2P', monospace; font-size: 0.6rem; color: #f0c020; margin-bottom: 16px; letter-spacing: 1px; }
+    p { font-size: 14px; color: #c8c4b8; line-height: 1.7; margin-bottom: 12px; }
+    a { color: #80b8d0; }
+    .btn { display: inline-block; margin-top: 12px; padding: 10px 20px; background: #9a4a4a; color: #e8dcc4; border: 1px solid #7a3a3a; border-radius: 4px; font-family: 'Press Start 2P', monospace; font-size: 0.4rem; cursor: pointer; letter-spacing: 0.5px; }
+    .btn:hover { background: #aa5a5a; }
+    .btn.green { background: #4a7c59; border-color: #3a5c40; }
+    .btn.green:hover { background: #5a9c6a; }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <h1>UNSUBSCRIBE</h1>
+    <p id="msg">Stop receiving UBL weekly briefings?</p>
+    <button class="btn" id="btn" onclick="doUnsubscribe()">YES, UNSUBSCRIBE ME</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://fueuwdhhuvnrxiwzrqee.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1ZXV3ZGhodXZucnhpd3pycWVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNDAzMzYsImV4cCI6MjA5MTYxNjMzNn0.wmlFet8PpNgXGBPnrXHOXtzFs1HxLkcQIAHBRDitDpo';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const uid = new URLSearchParams(window.location.search).get('uid');
+    if (!uid) {
+      document.getElementById('msg').textContent = 'Invalid unsubscribe link.';
+      document.getElementById('btn').style.display = 'none';
+    }
+
+    async function doUnsubscribe() {
+      const btn = document.getElementById('btn');
+      btn.disabled = true;
+      btn.textContent = '...';
+      const { data, error } = await sb.rpc('unsubscribe_user', { user_uuid: uid });
+      if (error || data === false) {
+        document.getElementById('msg').textContent = 'Something went wrong. Email hello@universalbasiclobbyist.ai and we\'ll remove you by hand.';
+        btn.style.display = 'none';
+        return;
+      }
+      document.getElementById('card').innerHTML = `
+        <h1>DONE</h1>
+        <p>You won't receive any more briefings.</p>
+        <p>Changed your mind?</p>
+        <button class="btn green" onclick="doResubscribe()">RESUBSCRIBE</button>`;
+    }
+
+    async function doResubscribe() {
+      await sb.rpc('resubscribe_user', { user_uuid: uid });
+      document.getElementById('card').innerHTML = `
+        <h1>WELCOME BACK</h1>
+        <p>Briefings will resume with the next weekly digest.</p>`;
+    }
+  </script>
+</body>
+</html>

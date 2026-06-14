@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UBL — Privacy Policy</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@400;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #1a1a2e; font-family: 'DM Sans', sans-serif; color: #c8c4b8; line-height: 1.8; }
+    .page { max-width: 640px; margin: 0 auto; padding: 50px 20px; }
+    h1 { font-family: 'Press Start 2P', monospace; font-size: 0.7rem; color: #f0c020; margin-bottom: 8px; letter-spacing: 1px; }
+    .updated { font-size: 12px; color: #706c60; margin-bottom: 32px; }
+    h2 { font-family: 'Press Start 2P', monospace; font-size: 0.45rem; color: #d0b040; margin: 28px 0 10px; letter-spacing: 0.5px; }
+    p, li { font-size: 14px; margin-bottom: 10px; }
+    ul { padding-left: 22px; margin-bottom: 10px; }
+    a { color: #80b8d0; }
+    .back { display: inline-block; margin-top: 32px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>PRIVACY POLICY</h1>
+    <p class="updated">Last updated: June 11, 2026</p>
+
+    <p>Universal Basic Lobbyist ("UBL", "we") helps San Francisco residents understand and act on local government decisions. Because the service is built around your political priorities, we take the sensitivity of that data seriously. This page explains exactly what we collect and what we do with it.</p>
+
+    <h2>WHAT WE COLLECT</h2>
+    <ul>
+      <li><strong>Email address</strong> — to deliver your briefings and sign you in.</li>
+      <li><strong>SF supervisorial district</strong> — to route recommendations to the right representatives.</li>
+      <li><strong>Policy preferences</strong> — your answers to our survey questions and anything you write in free-text fields. This is political opinion data; see "How we protect it" below.</li>
+      <li><strong>Engagement settings</strong> — how much time you want to spend, whether you'll attend hearings, donation comfort.</li>
+      <li><strong>Action history</strong> — when you open a drafted email or confirm you sent one, we log it so the product can learn what's useful to you.</li>
+    </ul>
+
+    <h2>HOW WE USE IT</h2>
+    <ul>
+      <li>To generate your personalized weekly briefing and action recommendations.</li>
+      <li>To improve the relevance of what we send you over time.</li>
+      <li>That's it. We do not sell, rent, or share your data with advertisers, campaigns, political parties, or data brokers. Ever.</li>
+    </ul>
+
+    <h2>AI PROCESSING</h2>
+    <p>Your preferences and district are sent to Anthropic's Claude API to generate your briefing. Anthropic does not train models on this API data. Article classification and drafting happen the same way.</p>
+
+    <h2>WHERE IT LIVES</h2>
+    <p>Data is stored in Supabase (Postgres, hosted in the US) with row-level security: you can only access your own records. Emails are delivered via Resend.</p>
+
+    <h2>HOW WE PROTECT IT</h2>
+    <ul>
+      <li>Access to your data requires signing in via a link sent to your email — no passwords to leak.</li>
+      <li>Your political preference data is never shown to other users.</li>
+      <li>Drafted emails are sent from <em>your</em> email client — UBL never sends communications to officials on your behalf.</li>
+    </ul>
+
+    <h2>YOUR RIGHTS</h2>
+    <ul>
+      <li><strong>Unsubscribe</strong> — every briefing has an unsubscribe link; it works immediately.</li>
+      <li><strong>Export or delete</strong> — email us and we'll send you everything we have or erase it completely within 7 days.</li>
+      <li><strong>Correct</strong> — update your preferences anytime in your console.</li>
+    </ul>
+
+    <h2>CONTACT</h2>
+    <p>Questions, deletion requests, anything: <a href="mailto:hello@universalbasiclobbyist.ai">hello@universalbasiclobbyist.ai</a></p>
+
+    <a class="back" href="signup.html">← Back to signup</a>
+  </div>
+</body>
+</html>

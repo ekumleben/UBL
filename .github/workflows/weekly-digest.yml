@@ -1,0 +1,57 @@
+name: Weekly Digest
+
+on:
+  schedule:
+    # Monday 14:00 UTC = 6am PST / 7am PDT — Monday-morning delivery
+    - cron: "0 14 * * 1"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (no emails sent)"
+        type: boolean
+        default: true
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # The political context + grammar docs are gitignored (editorial content).
+      # They're stored as repository secrets and restored here.
+      # To update: re-paste file contents into the secrets in repo Settings.
+      - name: Restore political context
+        run: |
+          mkdir -p ubl/prompts
+          printf '%s' "${{ secrets.SF_POLITICAL_CONTEXT }}" > ubl/prompts/sf_political_context.md
+          printf '%s' "${{ secrets.SF_POLITICAL_GRAMMAR }}" > ubl/prompts/sf_political_grammar.md
+
+      - name: Run pipeline
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          FOUNDER_EMAIL: ${{ secrets.FOUNDER_EMAIL }}
+          FOUNDER_USER_ID: ${{ secrets.FOUNDER_USER_ID }}
+          SITE_URL: https://app.universalbasiclobbyist.ai
+          LOG_LEVEL: INFO
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            python -m ubl.jobs.cron --dry-run
+          else
+            python -m ubl.jobs.cron --send
+          fi
+
+      # GitHub emails the repo owner automatically when a scheduled workflow
+      # fails — that's the Phase 0 alerting story.

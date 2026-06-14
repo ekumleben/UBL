@@ -18,7 +18,7 @@ from ubl.delivery.email import send_digest_email
 from ubl.digest.run import run_digest_pipeline
 from ubl.logging_config import setup_logging
 from ubl.pipeline.run import run_ingestion_pipeline
-from ubl.pipeline.store import store_digest
+from ubl.pipeline.store import get_all_users, store_digest
 
 logger = logging.getLogger(__name__)
 
@@ -43,35 +43,46 @@ def run_weekly_pipeline(dry_run: bool | None = None) -> None:
     new_articles = run_ingestion_pipeline()
     logger.info("Ingestion complete: %d new articles", new_articles)
 
-    # 2. Generate digest
-    logger.info("--- Step 2: Digest Generation ---")
-    user_id = settings.founder_user_id
-    if not user_id:
-        logger.error("FOUNDER_USER_ID not set in .env — cannot generate digest")
+    # 2. Get all users
+    users = get_all_users()
+    if not users:
+        logger.error("No users found in database")
         sys.exit(1)
+    logger.info("--- Step 2: Generating digests for %d user(s) ---", len(users))
 
-    digest = run_digest_pipeline(user_id, dry_run=dry_run)
+    total_items = 0
+    total_recs = 0
 
-    # 3. Send email
-    logger.info("--- Step 3: Email Delivery ---")
-    to_email = settings.founder_email
-    if not to_email:
-        logger.error("FOUNDER_EMAIL not set in .env — cannot send email")
-        sys.exit(1)
+    for user in users:
+        logger.info("--- User: %s (%s) ---", user.email, user.district or "no district")
 
-    sent = send_digest_email(digest, to_email, dry_run=dry_run)
-    if sent:
-        logger.info("Email %s to %s", "saved locally" if dry_run else "sent", to_email)
-    else:
-        logger.error("Email delivery failed")
+        try:
+            digest = run_digest_pipeline(user.id, dry_run=dry_run)
+
+            sent = send_digest_email(
+                digest, user.email, dry_run=dry_run, digest_id=digest.id
+            )
+            if sent:
+                logger.info(
+                    "Email %s to %s", "saved locally" if dry_run else "sent", user.email
+                )
+            else:
+                logger.error("Email delivery failed for %s", user.email)
+
+            total_items += len(digest.items)
+            total_recs += len(digest.leverage.recommendations)
+
+        except Exception:
+            logger.exception("Failed to generate digest for %s", user.email)
 
     elapsed = time.time() - start
     logger.info("=" * 60)
     logger.info(
-        "Pipeline complete in %.1fs — %d items, %d recommendations",
+        "Pipeline complete in %.1fs — %d user(s), %d total items, %d total recommendations",
         elapsed,
-        len(digest.items),
-        len(digest.leverage.recommendations),
+        len(users),
+        total_items,
+        total_recs,
     )
     logger.info("=" * 60)
 
