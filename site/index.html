@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Universal Basic Lobbyist</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    overflow-x: hidden;
+    background: #1a1a2e;
+    font-family: 'DM Sans', sans-serif;
+    color: #e0dcd0;
+  }
+
+  canvas#scene {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    z-index: 0;
+  }
+
+  /* Gradient fade at bottom of canvas */
+  .canvas-fade {
+    position: fixed;
+    bottom: 0; left: 0;
+    width: 100vw;
+    height: 30vh;
+    background: linear-gradient(to bottom, transparent, #1a1a2e 90%);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .page {
+    position: relative;
+    z-index: 10;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    padding-top: 55vh;
+  }
+
+  .hero {
+    text-align: center;
+    max-width: 780px;
+    animation: heroIn 1.2s ease-out;
+  }
+
+  @keyframes heroIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .badge-clip {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .badge {
+    position: absolute;
+    top: 16px;
+    right: -40px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.5rem;
+    color: #2a2218;
+    background: #f0d020;
+    padding: 6px 80px;
+    letter-spacing: 2px;
+    border-top: 2px solid #d8b800;
+    border-bottom: 2px solid #d8b800;
+    transform: rotate(18deg);
+    box-shadow: 1px 2px 0 rgba(0,0,0,0.2);
+  }
+
+  .hero h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.7rem, 2.2vw, 1.2rem);
+    color: #2a2218;
+    line-height: 1.4;
+    margin-bottom: 1rem;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
+    white-space: nowrap;
+  }
+
+  .hero .subtitle {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.45rem, 1.1vw, 0.58rem);
+    color: #5a4a30;
+    line-height: 1.7;
+    margin-bottom: 1.8rem;
+    letter-spacing: 1px;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero .description {
+    font-size: 0.9rem;
+    color: #908c80;
+    line-height: 1.8;
+    margin-bottom: 2.5rem;
+    max-width: 440px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Waitlist form */
+  .waitlist {
+    display: flex;
+    gap: 0;
+    max-width: 420px;
+    margin: 0 auto 1.5rem;
+    width: 100%;
+  }
+
+  .waitlist input[type="email"] {
+    flex: 1;
+    padding: 10px 14px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.45rem;
+    background: rgba(255,255,255,0.6);
+    border: 2px solid #8b6914;
+    border-right: none;
+    color: #2a2218;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .waitlist input[type="email"]::placeholder {
+    color: #9a8a6a;
+  }
+
+  .waitlist input[type="email"]:focus {
+    border-color: #a07a18;
+    background: rgba(255,255,255,0.8);
+  }
+
+  .waitlist button {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.45rem;
+    padding: 10px 16px;
+    background: #4a7c59;
+    color: #e8dcc4;
+    border: 2px solid #3a5c40;
+    border-left: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .waitlist button:hover {
+    background: #5a9c6a;
+  }
+
+  .waitlist-note {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.52rem;
+    color: #7a6a4a;
+    text-align: center;
+    line-height: 2;
+    max-width: 560px;
+    margin: 0 auto;
+    letter-spacing: 0.5px;
+  }
+
+  .contact-email {
+    display: inline;
+    color: #5a4a30;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* Success state */
+  .waitlist-success {
+    display: none;
+    text-align: center;
+    padding: 12px 24px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.55rem;
+    color: #3a6a3a;
+    line-height: 2;
+  }
+
+  /* Construction billboard */
+  .card {
+    position: relative;
+    background: #e8dcc4;
+    border: 4px solid #8b6914;
+    padding: 0;
+    box-shadow: 4px 6px 0 rgba(0,0,0,0.4);
+    image-rendering: pixelated;
+  }
+
+  /* Hazard stripes header */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 10px;
+    background: repeating-linear-gradient(
+      -45deg,
+      #1a1a1a,
+      #1a1a1a 6px,
+      #f0c020 6px,
+      #f0c020 12px
+    );
+  }
+
+  /* Hazard stripes footer */
+  .card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 10px;
+    background: repeating-linear-gradient(
+      -45deg,
+      #1a1a1a,
+      #1a1a1a 6px,
+      #f0c020 6px,
+      #f0c020 12px
+    );
+  }
+
+  .card-inner {
+    padding: 2.5rem 1.5rem 2rem;
+    margin: 10px 0;
+  }
+
+  /* Wooden posts */
+  .post-left, .post-right {
+    position: absolute;
+    top: -8px;
+    width: 10px;
+    height: calc(100% + 48px);
+    background: linear-gradient(90deg, #6a4a1a, #8b6914, #7a5a1a);
+    border: 1px solid #5a3a0a;
+    z-index: -1;
+  }
+  .post-left { left: 16px; }
+  .post-right { right: 16px; }
+
+  /* Nails */
+  .nail {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background: #a0a0a0;
+    border-radius: 50%;
+    border: 1px solid #707070;
+    z-index: 2;
+  }
+  .nail-tl { top: 14px; left: 6px; }
+  .nail-tr { top: 14px; right: 6px; }
+  .nail-bl { bottom: 14px; left: 6px; }
+  .nail-br { bottom: 14px; right: 6px; }
+
+  .corner-tr, .corner-bl { display: none; }
+
+  /* Speech bubble hints floating */
+  .speech-bubbles {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .speech {
+    position: absolute;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 5px;
+    color: #2a2a3e;
+    background: rgba(240, 235, 210, 0.85);
+    padding: 3px 5px;
+    border-radius: 2px;
+    opacity: 0;
+    animation: speechFloat 12s ease-in-out infinite;
+    white-space: nowrap;
+  }
+
+  .speech::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 8px;
+    width: 4px;
+    height: 3px;
+    background: rgba(240, 235, 210, 0.85);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+  }
+
+  @keyframes speechFloat {
+    0%, 15% { opacity: 0; transform: translateY(4px); }
+    20%, 40% { opacity: 1; transform: translateY(0); }
+    45%, 100% { opacity: 0; transform: translateY(-4px); }
+  }
+
+  @media (max-width: 600px) {
+    .card-inner { padding: 3.5rem 1.2rem 1.5rem; }
+    .waitlist { flex-direction: column; }
+    .waitlist input[type="email"] { border-right: 2px solid #8b6914; border-bottom: none; }
+    .waitlist button { border-left: 2px solid #3a5c40; border-top: none; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+<div class="canvas-fade"></div>
+
+<!-- Speech bubbles that float over the city -->
+<div class="speech-bubbles" id="speechBubbles"></div>
+
+<div class="page">
+  <div class="hero">
+    <div class="card">
+      <div class="post-left"></div>
+      <div class="post-right"></div>
+      <div class="nail nail-tl"></div>
+      <div class="nail nail-tr"></div>
+      <div class="nail nail-bl"></div>
+      <div class="nail nail-br"></div>
+      <div class="badge-clip"><div class="badge">SF BETA</div></div>
+      <div class="card-inner">
+
+      <h1>UNIVERSAL BASIC LOBBYIST</h1>
+
+
+      <div class="waitlist" id="waitlistForm">
+        <a href="signup.html" style="font-family: 'Press Start 2P', monospace; font-size: 0.45rem; padding: 10px 24px; background: #4a7c59; color: #e8dcc4; border: 2px solid #3a5c40; cursor: pointer; text-decoration: none; display: inline-block; letter-spacing: 0.5px; transition: background 0.2s;">SIGN UP FREE</a>
+      </div>
+
+      <p class="waitlist-note">Personalized AI that monitors your local government, and helps you take high-leverage actions on your priorities. Because every resident deserves a seat at the table. Even the busy ones.<br><br>Live in SF. <span class="contact-email">Say hi: <a href="mailto:hello@universalbasiclobbyist.ai" style="color:inherit;text-decoration:inherit;">hello@universalbasiclobbyist.ai</a></span></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── WAITLIST ───
+async function joinWaitlist() {
+  const email = document.getElementById('emailInput').value;
+  if (!email || !email.includes('@')) return;
+  
+  const btn = document.querySelector('.waitlist button');
+  btn.textContent = '...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+
+    if (res.ok) {
+      document.getElementById('waitlistForm').style.display = 'none';
+      document.getElementById('waitlistSuccess').style.display = 'block';
+    } else {
+      btn.textContent = 'RETRY';
+      btn.disabled = false;
+    }
+  } catch (err) {
+    btn.textContent = 'RETRY';
+    btn.disabled = false;
+  }
+}
+document.getElementById('emailInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') joinWaitlist();
+});
+
+// ─── SPEECH BUBBLES ───
+const speechTexts = [
+  "NEW ZONING HEARING TUES",
+  "EMAIL DRAFTED FOR YOU",
+  "YOUR SUPERVISOR VOTED NO",
+  "BOARD MEETING AT 2PM",
+  "BIKE LANE PROPOSAL FILED",
+  "3 ISSUES MATCH YOUR LIST",
+  "SENT TO DISTRICT 5 OFFICE",
+  "BUDGET COMMENT PERIOD OPEN",
+  "HOUSING PLAN VOTE MOVED UP",
+  "TAP TO SEND YOUR COMMENT",
+  "TRANSIT PLAN: ACT BY FRI",
+  "PERMIT HEARING ALERT",
+  "SIDEWALK REPAIR REQUEST SENT",
+  "NEW ORDINANCE AFFECTS YOUR AREA",
+  "5 UPDATES SINCE LAST WEEK",
+  "YOUR COMMENT WAS READ ALOUD",
+  "TRACKED MEASURE PASSED 8-3",
+];
+
+function spawnBubbles() {
+  const container = document.getElementById('speechBubbles');
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+
+  speechTexts.forEach((text, i) => {
+    const el = document.createElement('div');
+    el.className = 'speech';
+    el.textContent = text;
+    el.style.left = (10 + Math.random() * (W - 160)) + 'px';
+    el.style.top = (H * 0.1 + Math.random() * (H * 0.3)) + 'px';
+    el.style.animationDelay = (i * 2.8 + Math.random() * 2) + 's';
+    el.style.animationDuration = (10 + Math.random() * 6) + 's';
+    container.appendChild(el);
+  });
+}
+spawnBubbles();
+
+// ─── PIXEL ART CANVAS ───
+const canvas = document.getElementById('scene');
+const ctx = canvas.getContext('2d');
+const SCALE = 3;
+let W, H, gW, gH;
+
+function resize() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = W;
+  canvas.height = H;
+  gW = Math.floor(W / SCALE);
+  gH = Math.floor(H / SCALE);
+}
+resize();
+window.addEventListener('resize', () => { resize(); initCitizens(); });
+
+const PAL = {
+  sky1: '#1a1a2e', sky2: '#2d2b55', sky3: '#4a3f6b', sky4: '#6b5b8a', skyPink: '#8a6a7a',
+  stars: '#ffe8a0',
+  ground: '#3a5a2f', groundDark: '#2a4a1f',
+  road: '#5a5a6a', roadLine: '#7a7a8a', sidewalk: '#7a7a6a',
+  cityHall: '#d4c8a0', cityHallDark: '#b0a580', cityHallRoof: '#7a3535',
+  cityHallDoor: '#5a3a2a',
+  brick1: '#905848', brick2: '#a07060', brick3: '#885040',
+  wood: '#8b7355',
+  window: '#3a5a7a', windowLit: '#ffe8a0',
+  skin: ['#f0c8a0','#d4a878','#c09060','#8b6848','#e8b890','#a07850'],
+  hair: ['#4a3020','#8b6848','#c0a060','#d04040','#404040','#2a2a2a','#e0c890'],
+  shirt: ['#d04040','#4080d0','#40b040','#d0a020','#d060a0','#6040c0','#40c0c0','#d07020','#e0e0e0','#8060d0'],
+  pants: ['#3a3a5a','#5a4a3a','#2a4a2a','#4a3a2a','#2a2a4a'],
+  crane: '#d0b040', scaffold: '#a09070', hardhat: '#e0c020',
+  tree: '#2a6a2a', treeDark: '#1a4a1a',
+  flower: ['#e04060','#e0d040','#d060d0','#6060e0'],
+  bush: '#3a7a3a',
+  flag: '#3060a0',
+};
+
+function px(x, y, c) { ctx.fillStyle=c; ctx.fillRect(Math.floor(x)*SCALE,Math.floor(y)*SCALE,SCALE,SCALE); }
+function pxR(x,y,w,h,c) { ctx.fillStyle=c; ctx.fillRect(Math.floor(x)*SCALE,Math.floor(y)*SCALE,Math.floor(w)*SCALE,Math.floor(h)*SCALE); }
+
+function lerpC(a,b,t) {
+  const ah=parseInt(a.slice(1),16),bh=parseInt(b.slice(1),16);
+  const ar=(ah>>16)&0xff,ag=(ah>>8)&0xff,ab=ah&0xff;
+  const br=(bh>>16)&0xff,bg=(bh>>8)&0xff,bb=bh&0xff;
+  return `rgb(${Math.round(ar+(br-ar)*t)},${Math.round(ag+(bg-ag)*t)},${Math.round(ab+(bb-ab)*t)})`;
+}
+
+// ─── SKY ───
+function drawSky() {
+  const skyH = Math.floor(gH * 0.38);
+  for (let y=0; y<skyH; y++) {
+    const t = y/skyH;
+    let c;
+    if (t<0.3) c=lerpC(PAL.sky1,PAL.sky2,t/0.3);
+    else if (t<0.6) c=lerpC(PAL.sky2,PAL.sky3,(t-0.3)/0.3);
+    else if (t<0.85) c=lerpC(PAL.sky3,PAL.sky4,(t-0.6)/0.25);
+    else c=lerpC(PAL.sky4,PAL.skyPink,(t-0.85)/0.15);
+    pxR(0,y,gW,1,c);
+  }
+  const seeds=[23,67,112,45,189,234,78,156,201,12,90,145,178,56,210,34,167,89,123,245,33,77,150,198,220,8,60,130,170,250];
+  for (let i=0; i<seeds.length; i++) {
+    const sx=(seeds[i]*7+i*31)%gW, sy=(seeds[i]*3+i*17)%Math.floor(skyH*0.65);
+    if (Math.sin(Date.now()*0.003+i)*0.3+0.7>0.5) px(sx,sy,PAL.stars);
+  }
+}
+
+// ─── CLOUDS ───
+const clouds=[];
+for (let i=0;i<6;i++) clouds.push({x:Math.random()*400,y:3+Math.random()*18,w:8+Math.random()*14,s:0.008+Math.random()*0.015});
+function drawClouds() {}
+
+// ─── GROUND ───
+function drawGround() {
+  const gy=Math.floor(gH*0.38);
+  pxR(0,gy,gW,gH-gy,PAL.ground);
+  const roadY=gy+12, roadH=14;
+  pxR(0,roadY,gW,roadH,PAL.road);
+  for (let x=0;x<gW;x+=8) pxR(x,roadY+6,4,1,PAL.roadLine);
+  pxR(0,roadY-2,gW,2,PAL.sidewalk);
+  pxR(0,roadY+roadH,gW,2,PAL.sidewalk);
+  for (let x=0;x<gW;x+=3) { if((x*137+89)%100<30) px(x,roadY+roadH+4+((x*137+89)%8),PAL.groundDark); }
+}
+
+// ─── PIXEL TEXT ───
+const FONT={'A':[0b010,0b101,0b111,0b101,0b101],'B':[0b110,0b101,0b110,0b101,0b110],'C':[0b011,0b100,0b100,0b100,0b011],'D':[0b110,0b101,0b101,0b101,0b110],'E':[0b111,0b100,0b110,0b100,0b111],'F':[0b111,0b100,0b110,0b100,0b100],'G':[0b011,0b100,0b101,0b101,0b011],'H':[0b101,0b101,0b111,0b101,0b101],'I':[0b111,0b010,0b010,0b010,0b111],'J':[0b001,0b001,0b001,0b101,0b010],'K':[0b101,0b101,0b110,0b101,0b101],'L':[0b100,0b100,0b100,0b100,0b111],'M':[0b101,0b111,0b111,0b101,0b101],'N':[0b101,0b111,0b111,0b111,0b101],'O':[0b010,0b101,0b101,0b101,0b010],'P':[0b110,0b101,0b110,0b100,0b100],'Q':[0b010,0b101,0b101,0b111,0b011],'R':[0b110,0b101,0b110,0b101,0b101],'S':[0b011,0b100,0b010,0b001,0b110],'T':[0b111,0b010,0b010,0b010,0b010],'U':[0b101,0b101,0b101,0b101,0b010],'V':[0b101,0b101,0b101,0b010,0b010],'W':[0b101,0b101,0b111,0b111,0b101],'X':[0b101,0b101,0b010,0b101,0b101],'Y':[0b101,0b101,0b010,0b010,0b010],'Z':[0b111,0b001,0b010,0b100,0b111],' ':[0,0,0,0,0]};
+function drawText(t,x,y,c) {
+  let cx=x;
+  for (const ch of t.toUpperCase()) { const g=FONT[ch]; if(g) for (let r=0;r<5;r++) for (let col=0;col<3;col++) if(g[r]&(4>>col)) px(cx+col,y+r,c); cx+=4; }
+}
+
+// ─── BAY & GOLDEN GATE ───
+function drawBay() {
+  const gy = bY();
+  const gapL = 72;
+  const gapR = Math.floor(gW/2) - 38;
+  if (gapR - gapL < 12) return;
+
+  const gapW = gapR - gapL;
+  const midX = Math.floor((gapL + gapR) / 2);
+  const roadY = gy + 12;
+
+  // U-shaped inlet
+  const inletDepth = roadY - gy - 2;
+  for (let x = gapL; x < gapR; x++) {
+    const t = (x - gapL) / (gapW - 1);
+    const curve = 1 - 4 * (t - 0.5) * (t - 0.5);
+    const waterDepth = Math.max(1, Math.floor(curve * inletDepth));
+    const wc = lerpC('#1a2848', '#2a4868', curve * 0.5);
+    pxR(x, gy, 1, waterDepth, wc);
+  }
+
+  // Water shimmer
+  const time = Date.now() * 0.001;
+  for (let i = 0; i < 6; i++) {
+    const sx = gapL + 3 + ((i * 5 + 2) % (gapW - 6));
+    const t = (sx - gapL) / (gapW - 1);
+    const curve = 1 - 4 * (t - 0.5) * (t - 0.5);
+    const maxD = Math.floor(curve * inletDepth);
+    const sy = gy + 2 + Math.floor(Math.sin(time + i * 1.3) * Math.max(1, maxD * 0.3));
+    if (sy < gy + maxD - 1) px(sx, sy, '#4080a0');
+  }
+
+  // ── Golden Gate Bridge ──
+  const GGB = '#b84830'; // International Orange, slightly muted
+  const GGB_DK = '#8c3420'; // shadow
+  const GGB_HI = '#d05838'; // highlight
+
+  // Bridge spans full gap
+  const bL = gapL + 1;
+  const bR = gapR - 1;
+  const bridgeW = bR - bL;
+  const deckY = gy - 1; // deck just above horizon
+
+  // Two towers - tall art deco style
+  const tH = 16;
+  const t1x = bL + Math.floor(bridgeW * 0.3);
+  const t2x = bL + Math.floor(bridgeW * 0.7);
+
+  // Tower 1
+  pxR(t1x - 1, deckY - tH, 3, tH + 2, GGB);
+  pxR(t1x - 1, deckY - tH, 3, 1, GGB_HI); // top cap
+  // Cross braces
+  pxR(t1x - 1, deckY - tH + 4, 3, 1, GGB_DK);
+  pxR(t1x - 1, deckY - tH + 8, 3, 1, GGB_DK);
+  pxR(t1x - 1, deckY - tH + 12, 3, 1, GGB_DK);
+  // Slight taper - highlight edges
+  px(t1x - 2, deckY - 1, GGB_DK);
+  px(t1x + 2, deckY - 1, GGB_DK);
+
+  // Tower 2
+  pxR(t2x - 1, deckY - tH, 3, tH + 2, GGB);
+  pxR(t2x - 1, deckY - tH, 3, 1, GGB_HI);
+  pxR(t2x - 1, deckY - tH + 4, 3, 1, GGB_DK);
+  pxR(t2x - 1, deckY - tH + 8, 3, 1, GGB_DK);
+  pxR(t2x - 1, deckY - tH + 12, 3, 1, GGB_DK);
+  px(t2x - 2, deckY - 1, GGB_DK);
+  px(t2x + 2, deckY - 1, GGB_DK);
+
+  // Deck (road surface) - 2px thick
+  pxR(bL, deckY, bridgeW, 1, GGB);
+  pxR(bL, deckY + 1, bridgeW, 1, GGB_DK);
+
+  // Main cables - catenary between towers
+  function catenary(x0, x1, topY, sagPx) {
+    for (let x = x0; x <= x1; x++) {
+      const ct = (x - x0) / (x1 - x0);
+      const sag = Math.floor(sagPx * 4 * (ct - 0.5) * (ct - 0.5));
+      const cy = topY + sagPx - sag;
+      if (cy < deckY) px(x, cy, GGB);
+    }
+  }
+
+  // Main span cable (between towers, deepest sag)
+  catenary(t1x, t2x, deckY - tH, Math.floor(tH * 0.6));
+
+  // Left side cable (approach)
+  for (let x = bL; x < t1x - 1; x++) {
+    const ct = (x - bL) / (t1x - 1 - bL);
+    const cy = deckY - Math.floor(ct * tH * 0.85);
+    if (cy < deckY) px(x, cy, GGB);
+  }
+
+  // Right side cable (approach)
+  for (let x = t2x + 2; x < bR; x++) {
+    const ct = (x - t2x - 2) / (bR - t2x - 2);
+    const cy = deckY - Math.floor((1 - ct) * tH * 0.85);
+    if (cy < deckY) px(x, cy, GGB);
+  }
+
+  // Vertical suspender cables (hang from main cable to deck)
+  for (let x = t1x + 2; x < t2x - 1; x += 2) {
+    const ct = (x - t1x) / (t2x - t1x);
+    const sag = Math.floor(tH * 0.6 * 4 * (ct - 0.5) * (ct - 0.5));
+    const cableY = deckY - tH + Math.floor(tH * 0.6) - sag;
+    if (cableY < deckY - 1) {
+      for (let y = cableY + 1; y < deckY; y++) px(x, y, GGB_DK);
+    }
+  }
+}
+
+function bY(){return Math.floor(gH*0.38);}
+
+function drawBuilding(bx,by,bw,bh,wall,roof,wp) {
+  pxR(bx,by,bw,bh,wall);
+  pxR(bx-1,by-1,bw+2,2,roof);
+  const wc=Math.floor((bw-4)/6), wr=Math.floor((bh-6)/7);
+  for(let r=0;r<wr;r++) for(let c=0;c<wc;c++) {
+    const wx=bx+3+c*6, wy=by+4+r*7;
+    pxR(wx,wy,4,4,wp&&wp(r,c,Date.now())?PAL.windowLit:PAL.window);
+    pxR(wx+1,wy,1,4,'#3a5a7a');
+  }
+  pxR(bx+Math.floor(bw/2)-2,by+bh-7,4,7,PAL.cityHallDoor);
+}
+
+function drawCityHall() {
+  const cx=Math.floor(gW/2), bw=62, bh=38;
+  const bx=cx-Math.floor(bw/2), by=bY()-bh+10;
+
+  // Main building body
+  pxR(bx,by+14,bw,bh-14,PAL.cityHall);
+  pxR(bx+1,by+14,1,bh-14,PAL.cityHallDark);
+  pxR(bx+bw-2,by+14,1,bh-14,PAL.cityHallDark);
+
+  // Symmetrical wings
+  pxR(bx-6,by+18,6,bh-18,'#c8bc94');
+  pxR(bx+bw,by+18,6,bh-18,'#c8bc94');
+  pxR(bx-7,by+17,8,1,'#8a7a6a');
+  pxR(bx+bw-1,by+17,8,1,'#8a7a6a');
+  // Wing windows
+  for(let i=0;i<2;i++){
+    pxR(bx-5,by+21+i*7,4,4,(i===0)?PAL.windowLit:PAL.window);
+    pxR(bx+bw+1,by+21+i*7,4,4,(i===1)?PAL.windowLit:PAL.window);
+  }
+
+  // Windows first (behind columns)
+  for(let row=0;row<2;row++) for(let col=0;col<5;col++){
+    const wx=bx+7+col*10, wy=by+17+row*8;
+    const doorX=cx-5;
+    if(row===1&&wx>doorX-4&&wx<doorX+12) continue;
+    const lit=(col+row)%3===0;
+    pxR(wx,wy,5,5,lit?PAL.windowLit:PAL.window);
+    pxR(wx+2,wy,1,5,'#3a3a4a'); pxR(wx,wy+2,5,1,'#3a3a4a');
+  }
+
+  // Columns ON TOP of windows - thicker, with shadow
+  for(let c=0;c<8;c++){
+    const colX=bx+5+c*7;
+    pxR(colX+3,by+14,1,bh-18,'#b0a880'); // shadow
+    pxR(colX,by+14,3,bh-18,'#e8e0c8');   // column body (3px wide)
+    pxR(colX-1,by+14,5,1,'#e8e0c8');     // capital
+    pxR(colX-1,by+bh-5,5,1,'#e8e0c8');   // base
+  }
+
+  // Central raised section connecting to dome
+  const pedW=30, pedX=cx-Math.floor(pedW/2);
+  pxR(pedX,by+6,pedW,8,'#d8ccaa');
+  // Triangular pediment
+  for(let i=0;i<5;i++) pxR(pedX+2+i,by+5-i,pedW-4-i*2,1,'#8a7a6a');
+
+  // Drum sits directly on raised section
+  const drumW=16, drumH=5;
+  const drumX=cx-Math.floor(drumW/2), drumY=by+1;
+  pxR(drumX,drumY,drumW,drumH,'#c8bc98');
+  for(let i=0;i<5;i++) pxR(drumX+2+i*3,drumY,1,drumH,'#d8d0b0');
+
+  // Dome sits directly on drum
+  const dR=10, dCy=drumY;
+  for(let dy=-dR;dy<=0;dy++){
+    const dx=Math.floor(Math.sqrt(dR*dR-dy*dy));
+    const t=(dy+dR)/dR;
+    pxR(cx-dx,dCy+dy,dx*2+1,1,lerpC('#8a9a70','#b0a868',t));
+  }
+  // Dome highlight
+  for(let dy=-dR;dy<-dR+3;dy++){
+    const dx=Math.max(0,Math.floor(Math.sqrt(dR*dR-dy*dy))-2);
+    if(dx>0) pxR(cx-dx+1,dCy+dy,Math.floor(dx*0.6),1,'#c8c090');
+  }
+
+  // Lantern on top
+  pxR(cx-2,dCy-dR-3,5,4,'#c0b890');
+  pxR(cx-1,dCy-dR-2,3,2,'#ffe8a0');
+  // Spire
+  pxR(cx,dCy-dR-7,1,4,'#a0a080');
+  pxR(cx,dCy-dR-8,1,1,'#e0c840');
+  px(cx,dCy-dR-9,'#e0c840');
+
+  // SF Flag - white with gold phoenix
+  const flagWave=Math.sin(Date.now()*0.004)*1;
+  const fy=dCy-dR-10+Math.round(flagWave);
+  const fx=cx+2;
+  // White field
+  pxR(fx,fy,4,3,'#e8e8e8');
+  // Gold phoenix center
+  px(fx+1,fy+1,'#d4a020');
+  px(fx+2,fy+1,'#d4a020');
+  px(fx+1,fy+2,'#c08818');
+  px(fx+2,fy+2,'#c08818');
+  // Flagpole
+  pxR(fx-1,fy,1,3,'#606060');
+
+  // Grand staircase
+  for(let s=0;s<5;s++) pxR(bx+14-s*2,by+bh-1+s,bw-28+s*4,1,'#c8c0a0');
+
+  // Main entrance - tall arched doors
+  const doorW=10,doorH=14,doorX=cx-Math.floor(doorW/2),doorY=by+bh-doorH-2;
+  pxR(doorX,doorY,doorW,doorH,PAL.cityHallDoor);
+  pxR(doorX+doorW/2,doorY,1,doorH,'#4a2a1a');
+  for(let a=-5;a<=5;a++){
+    const ay=Math.floor(Math.sqrt(25-a*a));
+    px(doorX+5+a,doorY-ay+4,PAL.cityHallDark);
+  }
+  pxR(doorX+2,doorY+1,3,2,PAL.windowLit);
+  pxR(doorX+6,doorY+1,3,2,PAL.windowLit);
+
+  drawText('CITY HALL',cx-13,by+bh-4,'#f0e0b0');
+  return {x:bx-6,y:by,w:bw+12,h:bh,cx};
+}
+
+function drawAllBuildings() {
+  const gy=bY();
+  // ─── FAR LEFT ───
+
+  // Under construction #1 - steel frame only
+  const c1x=-4, c1y=gy-20, c1w=14, c1h=30;
+  // Steel frame
+  pxR(c1x,c1y,2,c1h,'#707880');
+  pxR(c1x+c1w-2,c1y,2,c1h,'#707880');
+  pxR(c1x,c1y,c1w,1,'#707880');
+  pxR(c1x,c1y+10,c1w,1,'#707880');
+  pxR(c1x,c1y+20,c1w,1,'#707880');
+  // Partial concrete floors
+  pxR(c1x,c1y+20,c1w,c1h-20,'#909498');
+  // Scaffolding
+  pxR(c1x+c1w,c1y+5,2,c1h-5,PAL.scaffold);
+  pxR(c1x+c1w,c1y+12,4,1,PAL.scaffold);
+  pxR(c1x+c1w,c1y+22,4,1,PAL.scaffold);
+  // Small crane on top
+  pxR(c1x+4,c1y-8,1,8,PAL.crane);
+  pxR(c1x-2,c1y-8,12,1,PAL.crane);
+
+  // Victorian / painted lady
+  const v1x=14, v1y=gy-32, v1w=16, v1h=42;
+  pxR(v1x,v1y,v1w,v1h,'#b08878');
+  pxR(v1x-1,v1y-1,v1w+2,2,'#6a4a4a');
+  pxR(v1x+3,v1y+8,10,10,'#c09888');
+  pxR(v1x+2,v1y+8,1,10,'#906858');
+  pxR(v1x+13,v1y+8,1,10,'#906858');
+  for(let r=0;r<3;r++) {
+    pxR(v1x+4,v1y+4+r*10,4,4,r===0?PAL.windowLit:PAL.window);
+    pxR(v1x+10,v1y+4+r*10,4,4,PAL.window);
+  }
+  pxR(v1x+6,v1y+v1h-7,4,7,PAL.cityHallDoor);
+  pxR(v1x,v1y+6,v1w,1,'#c8a898');
+
+  // Modern flat-top (concrete/glass)
+  const m1x=34, m1y=gy-24, m1w=20, m1h=34;
+  pxR(m1x,m1y,m1w,m1h,'#808890');
+  pxR(m1x,m1y-1,m1w,1,'#606870');
+  for(let r=0;r<4;r++) for(let c=0;c<3;c++) {
+    pxR(m1x+2+c*6,m1y+3+r*7,5,5,(r+c)%4===0?'#90c0d0':'#5888a0');
+  }
+  pxR(m1x+7,m1y+m1h-8,6,8,'#405060');
+
+  // Small shop / cafe left of City Hall
+  const s1x=66, s1y=gy-14, s1w=14, s1h=24;
+  pxR(s1x,s1y,s1w,s1h,'#d0b898');
+  pxR(s1x-1,s1y-1,s1w+2,2,'#a08868');
+  // Awning
+  for(let i=0;i<s1w;i++) pxR(s1x+i,s1y+8,1,2,(i%2===0)?'#c04848':'#e8e0d0');
+  // Shop window
+  pxR(s1x+2,s1y+4,10,4,'#80b8d0');
+  pxR(s1x+4,s1y+s1h-7,5,7,PAL.cityHallDoor);
+
+  const ch=drawCityHall();
+
+  // ─── RIGHT SIDE ───
+  const rx=ch.x+ch.w+4;
+
+  // Small shop right of City Hall
+  const s2x=rx-2, s2y=gy-12, s2w=12, s2h=22;
+  pxR(s2x,s2y,s2w,s2h,'#c0a8b0');
+  pxR(s2x-1,s2y-1,s2w+2,2,'#907888');
+  pxR(s2x+2,s2y+3,8,4,'#80b8d0');
+  for(let i=0;i<s2w;i++) pxR(s2x+i,s2y+7,1,2,(i%2===0)?'#4888a0':'#e8e0d0');
+  pxR(s2x+4,s2y+s2h-6,4,6,PAL.cityHallDoor);
+
+  // Art deco tower
+  const a1x=rx+14, a1y=gy-30, a1w=18, a1h=40;
+  pxR(a1x,a1y,a1w,a1h,'#c8b898');
+  pxR(a1x+2,a1y-3,a1w-4,3,'#c8b898');
+  pxR(a1x+5,a1y-6,a1w-10,3,'#c8b898');
+  pxR(a1x+5,a1y-7,a1w-10,1,'#a09878');
+  pxR(a1x+2,a1y-4,a1w-4,1,'#a09878');
+  pxR(a1x+4,a1y-3,1,a1h+3,'#b0a080');
+  pxR(a1x+a1w-5,a1y-3,1,a1h+3,'#b0a080');
+  for(let r=0;r<4;r++) for(let c=0;c<2;c++) {
+    pxR(a1x+6+c*6,a1y+4+r*8,4,5,(r===1&&c===0)?PAL.windowLit:PAL.window);
+  }
+  pxR(a1x+6,a1y+a1h-7,5,7,PAL.cityHallDoor);
+
+  // Under construction #2 - half-finished building with scaffold wrap
+  const c2x=rx+36, c2y=gy-22, c2w=16, c2h=32;
+  // Partial walls
+  pxR(c2x,c2y+8,c2w,c2h-8,PAL.brick2);
+  // Open top floors - just frame
+  pxR(c2x,c2y,2,8,'#707880');
+  pxR(c2x+c2w-2,c2y,2,8,'#707880');
+  pxR(c2x,c2y,c2w,1,'#707880');
+  pxR(c2x,c2y+4,c2w,1,'#707880');
+  // Scaffold wrapping
+  pxR(c2x-2,c2y,2,c2h,PAL.scaffold);
+  pxR(c2x+c2w,c2y,2,c2h,PAL.scaffold);
+  pxR(c2x-2,c2y+8,c2w+4,1,PAL.scaffold);
+  pxR(c2x-2,c2y+16,c2w+4,1,PAL.scaffold);
+  pxR(c2x-2,c2y+24,c2w+4,1,PAL.scaffold);
+  // Tarp / netting (green safety net)
+  for(let y=0;y<8;y++) for(let x=0;x<c2w;x++) {
+    if((x+y)%3===0) px(c2x+x,c2y+8+y,'#408850');
+  }
+  // Crane
+  pxR(c2x+8,c2y-12,2,12,PAL.crane);
+  pxR(c2x,c2y-12,18,1,PAL.crane);
+  const sw2=Math.sin(Date.now()*0.0008)*4;
+  pxR(c2x+4+sw2,c2y-11,1,6,'#a09040');
+
+  // Townhouse row (colorful, SF-style)
+  const t1x=rx+56;
+  // House 1 - blue
+  pxR(t1x,gy-20,12,30,'#6080a0');
+  pxR(t1x-1,gy-21,14,2,'#506880');
+  for(let r=0;r<3;r++) pxR(t1x+3,gy-16+r*7,6,4,r===2?PAL.windowLit:PAL.window);
+  pxR(t1x+4,gy+3,4,7,'#405060');
+  // House 2 - terracotta
+  pxR(t1x+14,gy-22,12,32,'#c08860');
+  pxR(t1x+13,gy-23,14,2,'#a06840');
+  for(let r=0;r<3;r++) pxR(t1x+17,gy-18+r*7,6,4,PAL.window);
+  pxR(t1x+18,gy+3,4,7,PAL.cityHallDoor);
+  // House 3 - green
+  pxR(t1x+28,gy-18,12,28,'#608868');
+  pxR(t1x+27,gy-19,14,2,'#406848');
+  for(let r=0;r<2;r++) pxR(t1x+31,gy-14+r*7,6,4,(r===0)?PAL.windowLit:PAL.window);
+  pxR(t1x+32,gy+3,4,7,PAL.cityHallDoor);
+
+  // Tall narrow building
+  const frx=t1x+44;
+  if(frx+14<gW) {
+    pxR(frx,gy-28,14,38,'#9890a8');
+    pxR(frx-1,gy-29,16,2,'#787088');
+    for(let r=0;r<4;r++) {
+      pxR(frx+3,gy-24+r*7,3,4,PAL.window);
+      pxR(frx+8,gy-24+r*7,3,4,r===3?PAL.windowLit:PAL.window);
+    }
+    pxR(frx+5,gy+3,4,7,'#585068');
+  }
+
+  // Under construction #3 far right - just foundation + crane (if space)
+  const c3x=frx+18;
+  if(c3x+16<gW) {
+    // Foundation
+    pxR(c3x,gy+2,16,8,'#808080');
+    pxR(c3x+2,gy+4,12,4,'#606060');
+    // Rebar sticking up
+    pxR(c3x+4,gy-4,1,6,'#605050');
+    pxR(c3x+8,gy-6,1,8,'#605050');
+    pxR(c3x+12,gy-3,1,5,'#605050');
+    // Small crane
+    pxR(c3x+14,gy-14,1,16,PAL.crane);
+    pxR(c3x+8,gy-14,10,1,PAL.crane);
+    // Dirt piles
+    for(let i=0;i<4;i++) pxR(c3x-2+i,gy+8-i,6-i,1,'#8a7a5a');
+  }
+
+  return ch;
+}
+
+// ─── CONSTRUCTION ───
+function drawConstruction() {
+  const rb=bY()+28, cx=8;
+  pxR(cx,rb+2,2,18,PAL.scaffold); pxR(cx+14,rb+2,2,18,PAL.scaffold);
+  pxR(cx,rb+8,16,1,PAL.scaffold); pxR(cx,rb+14,16,1,PAL.scaffold);
+  for(let y=0;y<10;y++) for(let x=0;x<12;x++) if((x+y)%5<3) px(cx+2+x,rb+10+y,PAL.brick2);
+  pxR(cx+22,rb-8,2,30,PAL.crane); pxR(cx+10,rb-8,20,1,PAL.crane);
+  const sw=Math.sin(Date.now()*0.001)*3, hx=cx+14+sw;
+  pxR(hx,rb-7,1,8,'#a09040'); pxR(hx-1,rb+1,3,2,'#808080');
+}
+
+// ─── PARK ───
+function drawPark() {
+  const rb=bY()+28, px0=Math.floor(gW*0.6);
+  const t=Date.now();
+  for(let i=0;i<12;i++) {
+    const fx=px0+4+i*3, fy=rb+6, sw=Math.sin(t*0.002+i)*0.5;
+    px(fx,fy-2+Math.round(sw),PAL.flower[i%4]); px(fx,fy-1,'#2a8a2a'); px(fx,fy,'#2a6a2a');
+  }
+  function drawTree(tx,ty,sz) {
+    pxR(tx,ty,2,sz+2,PAL.wood);
+    for(let l=0;l<sz;l++) { const w=sz*2-l*2+1; pxR(tx-Math.floor(w/2)+1,ty-sz+l,w,1,l%2===0?PAL.tree:PAL.treeDark); }
+  }
+  drawTree(px0-4,rb+4,5); drawTree(px0+42,rb+6,4); drawTree(px0+54,rb+3,6);
+  // Bench
+  pxR(px0+18,rb+14,10,1,PAL.wood); pxR(px0+18,rb+15,1,3,PAL.wood); pxR(px0+27,rb+15,1,3,PAL.wood);
+  pxR(px0+18,rb+11,10,1,PAL.wood); pxR(px0+18,rb+12,1,2,PAL.wood); pxR(px0+27,rb+12,1,2,PAL.wood);
+  // Fountain
+  const fX=px0+34,fY=rb+14;
+  pxR(fX,fY,8,3,'#8888a0'); pxR(fX+2,fY-3,4,3,'#8888a0'); pxR(fX+3,fY-4,2,1,'#8888a0');
+  const wf=Math.floor(Date.now()/200)%4;
+  if(wf<2){px(fX+3,fY-5,'#6090d0');px(fX+4,fY-5,'#6090d0');}
+  if(wf===1||wf===3){px(fX+2,fY-4,'#80b0e0');px(fX+5,fY-4,'#80b0e0');}
+  pxR(fX+1,fY+1,6,1,'#5080b0');
+}
+
+// ─── SAPLING (being planted) ───
+function drawSapling() {
+  const rb=bY()+28, stx=Math.floor(gW*0.35), sty=rb+4;
+  // Dirt hole
+  pxR(stx-2,sty+5,6,2,'#6a5a3a');
+  pxR(stx-1,sty+4,4,1,'#7a6a4a');
+  // Dirt pile beside hole
+  pxR(stx+5,sty+3,3,2,'#6a5a3a');
+  px(stx+6,sty+2,'#7a6a4a');
+  // Small sapling
+  pxR(stx+1,sty,1,4,PAL.wood);
+  // Tiny canopy
+  pxR(stx,sty-2,3,2,PAL.tree);
+  px(stx+1,sty-3,PAL.treeDark);
+}
+
+// ─── LAMPS ───
+function drawLamps() {
+  const rt=bY()+10;
+  for(const lx of [30,Math.floor(gW*0.35),Math.floor(gW*0.65),gW-30]) {
+    if(lx<0||lx>gW) continue;
+    pxR(lx,rt-10,1,10,'#505050'); pxR(lx-1,rt-11,3,1,'#606060');
+    if(0.7+Math.sin(Date.now()*0.005+lx)*0.3>0.5) px(lx,rt-12,'#ffe8a0');
+  }
+}
+
+// ─── SMOKE ───
+function drawSmoke() {
+  const t=Date.now()*0.001;
+  for(let i=0;i<4;i++) {
+    const sx=18+Math.sin(t+i*0.8)*2, sy=bY()-32-i*2;
+    ctx.fillStyle=`rgba(180,180,200,${Math.max(0.3-i*0.06,0)})`;
+    ctx.fillRect(Math.floor(sx)*SCALE,Math.floor(sy)*SCALE,SCALE*2,SCALE);
+  }
+}
+
+// ─── CITIZENS ───
+class Citizen {
+  constructor(cfg) {
+    this.x=cfg.x||0; this.y=cfg.y||0;
+    this.speed=cfg.speed||0.15+Math.random()*0.15;
+    this.skinC=PAL.skin[Math.floor(Math.random()*PAL.skin.length)];
+    this.hairC=PAL.hair[Math.floor(Math.random()*PAL.hair.length)];
+    this.shirtC=cfg.shirtColor||PAL.shirt[Math.floor(Math.random()*PAL.shirt.length)];
+    this.pantsC=PAL.pants[Math.floor(Math.random()*PAL.pants.length)];
+    this.dir=1; this.frame=Math.random()*100;
+    this.type=cfg.type||'citizen'; this.hat=cfg.hat||null;
+    this.hasPram=cfg.hasPram||false;
+    this.waypoints=cfg.waypoints||null; this.wpIdx=0;
+    this.waiting=0; this.waitTime=cfg.waitTime||60;
+  }
+  update() {
+    if(this.waiting>0){this.waiting--;return;}
+    if(this.waypoints){const wp=this.waypoints[this.wpIdx];this.targetX=wp.x;this.targetY=wp.y;}
+    const dx=(this.targetX||this.x)-this.x, dy=(this.targetY||this.y)-this.y;
+    const d=Math.sqrt(dx*dx+dy*dy);
+    if(d<1){if(this.waypoints){this.waiting=this.waitTime+Math.random()*40;this.wpIdx=(this.wpIdx+1)%this.waypoints.length;}return;}
+    this.x+=dx/d*this.speed; this.y+=dy/d*this.speed;
+    this.dir=dx>0?1:-1; this.frame+=0.08;
+  }
+  draw() {
+    const x=Math.floor(this.x), y=Math.floor(this.y);
+    if(this.type==='kid') {
+      // Smaller body - only 5px tall, 2px wide
+      const w=Math.sin(this.frame*4)>0?1:0;
+      if(w){px(x-1,y+3,this.pantsC);px(x+1,y+3,this.pantsC);px(x-1,y+4,'#2a2a2a');px(x+1,y+4,'#2a2a2a');}
+      else{px(x,y+3,this.pantsC);px(x+1,y+3,this.pantsC);px(x,y+4,'#2a2a2a');px(x+1,y+4,'#2a2a2a');}
+      pxR(x,y+1,2,2,this.shirtC);
+      pxR(x,y,2,1,this.skinC);
+      px(x,y-1,this.hairC);px(x+1,y-1,this.hairC);
+      return;
+    }
+    const w=Math.sin(this.frame*3)>0?1:0;
+    if(w){px(x-1,y+5,this.pantsC);px(x+1,y+5,this.pantsC);px(x-1,y+6,'#2a2a2a');px(x+1,y+6,'#2a2a2a');}
+    else{px(x,y+5,this.pantsC);px(x,y+6,'#2a2a2a');px(x-1,y+5,this.pantsC);px(x-1,y+6,'#2a2a2a');}
+    pxR(x-1,y+2,3,3,this.shirtC);
+    pxR(x-1,y,3,2,this.skinC);
+    pxR(x-1,y-1,3,1,this.hairC);
+    if(this.hat==='hardhat'){pxR(x-2,y-2,5,1,PAL.hardhat);pxR(x-1,y-1,3,1,PAL.hardhat);}
+    else if(this.hat==='beret'){pxR(x-1,y-2,4,1,'#d04060');pxR(x-1,y-1,3,1,'#d04060');}
+    if(this.type==='worker'){px(x+this.dir*2,y+2+Math.round(Math.sin(this.frame*4)),'#808080');px(x+this.dir*2,y+3,this.skinC);}
+    else if(this.type==='gardener'){px(x+this.dir*2,y+3,'#40a040');px(x+this.dir*2,y+4,PAL.wood);}
+    else if(this.type==='treeplanter'){
+      // Holding a shovel
+      px(x+this.dir*2,y+2,PAL.wood);px(x+this.dir*2,y+3,PAL.wood);px(x+this.dir*2,y+4,'#808080');
+      pxR(x-1,y-2,3,1,'#60a060'); // gardener hat
+    }
+    // Phone glow for some citizens
+    if(this.type==='citizen'&&this.waiting>10) {
+      const glow=Math.sin(Date.now()*0.01+this.frame)*0.5+0.5;
+      if(glow>0.3) px(x+this.dir,y+3,'#80c0ff');
+    }
+    // Pram
+    if(this.hasPram) {
+      const px0=x+this.dir*3;
+      pxR(px0,y+4,3,2,'#606880'); // pram body
+      pxR(px0,y+3,2,1,'#707890'); // hood
+      px(px0,y+6,'#404040'); // wheel
+      px(px0+2,y+6,'#404040'); // wheel
+      px(x+this.dir*2,y+4,this.skinC); // arm reaching to pram
+    }
+  }
+}
+
+let citizens=[];
+function initCitizens() {
+  citizens=[];
+  const gy=bY(), rb=gy+28, cx=Math.floor(gW/2);
+  const swA=gy+10, swB=gy+26;
+
+  // City Hall visitors — lots of them
+  for(let i=0;i<8;i++) {
+    const side=i%2===0?-1:1;
+    const sx=cx+side*(25+Math.random()*50);
+    citizens.push(new Citizen({x:sx,y:swA-2,waypoints:[
+      {x:cx,y:gy+5},{x:cx,y:gy-10},{x:cx,y:gy+5},{x:sx,y:swA-2}
+    ],waitTime:80+Math.random()*200,speed:0.1+Math.random()*0.08,hasPram:Math.random()<0.05}));
+  }
+
+  // Sidewalk walkers
+  for(let i=0;i<6;i++) {
+    const r=i%2===0;
+    citizens.push(new Citizen({x:r?-5-i*15:gW+5+i*15,y:swA-1,
+      waypoints:[{x:r?gW+5:-5,y:swA-1},{x:r?-5:gW+5,y:swA-1}],
+      waitTime:10,speed:0.12+Math.random()*0.12,hasPram:Math.random()<0.05}));
+  }
+  for(let i=0;i<5;i++) {
+    const r=i%2===0;
+    citizens.push(new Citizen({x:r?-10+i*25:gW+10-i*25,y:swB+1,
+      waypoints:[{x:r?gW+10:-10,y:swB+1},{x:r?-10:gW+10,y:swB+1}],
+      waitTime:5,speed:0.1+Math.random()*0.12,hasPram:Math.random()<0.05}));
+  }
+
+  // Construction workers
+  for(let i=0;i<3;i++) citizens.push(new Citizen({
+    x:12+i*8,y:rb+8+i*3,
+    waypoints:[{x:10+Math.random()*20,y:rb+6+Math.random()*8},{x:15+Math.random()*15,y:rb+10+Math.random()*6},{x:20+Math.random()*10,y:rb+4+Math.random()*8}],
+    waitTime:80+Math.random()*80,speed:0.05+Math.random()*0.04,type:'worker',hat:'hardhat',shirtColor:'#d08020'
+  }));
+
+  // Gardeners
+  const px0=Math.floor(gW*0.6);
+  for(let i=0;i<2;i++) citizens.push(new Citizen({
+    x:px0+10+i*15,y:rb+8,
+    waypoints:[{x:px0+5+Math.random()*15,y:rb+4+Math.random()*6},{x:px0+20+Math.random()*15,y:rb+6+Math.random()*6},{x:px0+10+Math.random()*10,y:rb+8+Math.random()*4}],
+    waitTime:100+Math.random()*100,speed:0.04+Math.random()*0.03,type:'gardener',shirtColor:'#40a040'
+  }));
+
+  // People sitting on bench
+  citizens.push(new Citizen({
+    x:px0+22,y:rb+8,
+    waypoints:[{x:px0+22,y:rb+8},{x:px0+23,y:rb+8}],
+    waitTime:400,speed:0.02
+  }));
+
+  // ─── Street tree planting (lower side of road) ───
+  const stx=Math.floor(gW*0.35), sty=rb+4;
+  // Tree planter gardener
+  citizens.push(new Citizen({
+    x:stx-4,y:sty,
+    waypoints:[{x:stx-4,y:sty},{x:stx+2,y:sty},{x:stx-2,y:sty+2},{x:stx+4,y:sty}],
+    waitTime:120+Math.random()*80,speed:0.03,type:'treeplanter',shirtColor:'#508040'
+  }));
+
+  // Kids running around nearby
+  const kidColors=['#e06080','#60a0e0','#e0a030','#80d080'];
+  for(let i=0;i<3;i++) {
+    const kx=stx+10+i*12, ky=rb+3+Math.random()*4;
+    citizens.push(new Citizen({
+      x:kx,y:ky,
+      waypoints:[
+        {x:kx+8+Math.random()*12,y:rb+2+Math.random()*6},
+        {x:kx-8-Math.random()*12,y:rb+4+Math.random()*4},
+        {x:kx+Math.random()*10,y:rb+1+Math.random()*6},
+      ],
+      waitTime:30+Math.random()*40,speed:0.18+Math.random()*0.1,type:'kid',
+      shirtColor:kidColors[i%kidColors.length]
+    }));
+  }
+}
+
+// ─── RENDER ───
+function render() {
+  if(citizens.length===0) initCitizens();
+  ctx.clearRect(0,0,W,H);
