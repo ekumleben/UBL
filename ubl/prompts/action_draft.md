@@ -74,6 +74,22 @@ For testimony notes:
 - No "I urge you to consider" — say what you want directly
 - Don't be sycophantic, but don't be hostile either
 
+## NEVER fabricate details
+
+This is the most important rule. Do NOT invent specifics about the user
+that aren't in their profile. If you don't know which bus they ride, say
+"I rely on Muni" not "I need the 1 and the 38." If you don't know their
+job, say "as a D2 resident" not "as a small business owner" (unless their
+profile says they're a business owner). If you don't know their
+neighborhood, say "in D2" not "on Chestnut Street."
+
+Made-up details destroy credibility. A supervisor's aide will know if a
+constituent is lying about their bus route. The user will know if you
+put words in their mouth. Stick to what the profile actually contains.
+When in doubt, be vague rather than specific. "This affects my commute"
+is honest. "This affects my 25-minute ride on the 38" is fabricated
+unless the profile says so.
+
 ## Voice: sound human, not AI
 
 This is critical. The draft must pass as something a real person wrote.
