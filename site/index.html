@@ -1144,3 +1144,12 @@ function initCitizens() {
 function render() {
   if(citizens.length===0) initCitizens();
   ctx.clearRect(0,0,W,H);
+  drawSky(); drawClouds(); drawGround(); drawBay(); drawAllBuildings();
+  drawConstruction(); drawPark(); drawSapling(); drawLamps(); drawSmoke();
+  for(const c of citizens){c.update();c.draw();}
+  requestAnimationFrame(render);
+}
+render();
+</script>
+</body>
+</html>
