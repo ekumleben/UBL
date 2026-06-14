@@ -60,6 +60,23 @@ def render_digest_email(digest: Digest) -> tuple[str, str]:
     template = env.get_template("digest.html")
     settings = get_settings()
 
+    # Resolve supervisor for the user's district
+    SUPERVISORS = {
+        'D1': ('Connie Chan', 'Connie.Chan@sfgov.org'),
+        'D2': ('Stephen Sherrill', 'Stephen.Sherrill@sfgov.org'),
+        'D3': ('Danny Sauter', 'Danny.Sauter@sfgov.org'),
+        'D4': ('Alan Wong', 'Alan.Wong@sfgov.org'),
+        'D5': ('Bilal Mahmood', 'Bilal.Mahmood@sfgov.org'),
+        'D6': ('Matt Dorsey', 'Matt.Dorsey@sfgov.org'),
+        'D7': ('Myrna Melgar', 'Myrna.Melgar@sfgov.org'),
+        'D8': ('Rafael Mandelman', 'Rafael.Mandelman@sfgov.org'),
+        'D9': ('Jackie Fielder', 'Jackie.Fielder@sfgov.org'),
+        'D10': ('Shamann Walton', 'Shamann.Walton@sfgov.org'),
+        'D11': ('Chyanne Chen', 'Chyanne.Chen@sfgov.org'),
+    }
+    district = getattr(digest, '_district', None) or ''
+    sup_name, sup_email = SUPERVISORS.get(district, ('your Supervisor', 'board.of.supervisors@sfgov.org'))
+
     html = template.render(
         week_of=digest.week_of.strftime("%B %d, %Y"),
         items=digest.items,
@@ -69,6 +86,9 @@ def render_digest_email(digest: Digest) -> tuple[str, str]:
         further_reading=digest.further_reading,
         site_url=settings.site_url.rstrip("/"),
         user_id=digest.user_id,
+        district=district,
+        supervisor_name=sup_name,
+        supervisor_email=sup_email,
     )
 
     subject = f"Your UBL Weekly — {digest.week_of.strftime('%B %d')}"

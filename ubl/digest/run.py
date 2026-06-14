@@ -108,6 +108,7 @@ def run_digest_pipeline(
     logger.info("Generating digest")
     digest = generate_digest(user, articles, political_context)
     digest.leverage = leverage
+    digest._district = user.district  # for email template supervisor lookup
 
     # 6. Draft actions for recommendations that need them
     for rec in leverage.recommendations:
