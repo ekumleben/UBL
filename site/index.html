@@ -361,9 +361,13 @@
         <p id="signupError" style="display:none;font-family:'Press Start 2P',monospace;font-size:0.4rem;color:#d04040;margin-top:8px;"></p>
       </div>
       <div id="signupSuccess" style="display:none;">
-        <p class="waitlist-note" style="margin-bottom:12px;">YOU'RE IN. Your first briefing is on its way.</p>
-        <a id="surveyLink" href="survey.html" style="font-family:'Press Start 2P',monospace;font-size:0.4rem;padding:8px 16px;background:#4a7c59;color:#e8dcc4;border:2px solid #3a5c40;text-decoration:none;display:inline-block;letter-spacing:0.5px;">PERSONALIZE MY BRIEFING</a>
-        <p style="margin-top:8px;"><a href="#" onclick="document.getElementById('signupSuccess').innerHTML='<p class=waitlist-note>ALL SET. We\\'ll be in touch.</p>';return false;" style="font-family:'Press Start 2P',monospace;font-size:0.35rem;color:#7a6a4a;text-decoration:none;">Skip for now</a></p>
+        <p class="waitlist-note" style="margin-bottom:14px;">YOU'RE IN.<br>Your first briefing is on its way.</p>
+        <div class="waitlist">
+          <a id="surveyLink" href="survey.html" class="signup-btn" style="text-decoration:none;justify-content:center;border:2px solid #3a5c40;flex:1;">PERSONALIZE MY BRIEFING</a>
+        </div>
+        <div class="waitlist" style="margin-top:6px;">
+          <button class="signup-btn" onclick="document.getElementById('signupSuccess').innerHTML='<p class=waitlist-note>ALL SET. WE\\'LL BE IN TOUCH.</p>';" style="background:#5a4a30;border:2px solid #4a3a20;flex:1;justify-content:center;">SKIP FOR NOW</button>
+        </div>
       </div>
       <style>
         .signup-btn {
