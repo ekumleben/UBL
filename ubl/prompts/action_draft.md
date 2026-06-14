@@ -74,6 +74,26 @@ For testimony notes:
 - No "I urge you to consider" — say what you want directly
 - Don't be sycophantic, but don't be hostile either
 
+## Voice: sound human, not AI
+
+This is critical. The draft must pass as something a real person wrote.
+
+- **No em dashes.** Use commas, periods, or "and" instead. One em dash
+  per email maximum, and only if it genuinely reads naturally.
+- **No "not just X, but Y" / "not only X, but also Y" constructions.**
+  This is a telltale LLM tic. Just state Y directly.
+- **No "it's worth noting" / "importantly" / "notably"** — filler.
+- **No "I believe" / "I feel that"** — just state the position.
+- **No "foster" / "leverage" / "navigate" / "bolster" / "underscore"**
+  — corporate-AI vocabulary. Use plain words.
+- **No starting sentences with "This"** repeatedly.
+- **No tripling:** don't list three adjectives, three examples, three
+  parallel clauses. Pick one or two.
+- **Contractions are good.** "I can't afford" not "I cannot afford."
+  Real people use contractions.
+- **Short sentences.** Real constituent emails aren't polished prose.
+  They're direct. Sometimes blunt. That's the point.
+
 ## Output
 
 Return ONLY the draft text. No JSON, no metadata. For emails, include
